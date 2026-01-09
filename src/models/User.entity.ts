@@ -5,8 +5,8 @@ import { Log } from "./Log.entity";
 
 @Entity()
 export class User{
-    @PrimaryGeneratedColumn()
-    id: number;
+    @PrimaryGeneratedColumn("uuid")
+    id: string;
 
     @Column({type:"text"})
     username: string;

@@ -7,7 +7,7 @@ import { OrganizationUser } from "./OrganizationUser.entity";
 
 @Entity()
 export class Organization{
-    @PrimaryGeneratedColumn()
+    @PrimaryGeneratedColumn("uuid")
     id: number
 
     @Column()
@@ -18,7 +18,7 @@ export class Organization{
     created_by: User
 
     @Column()
-    created_by_id: number
+    created_by_id: string
 
     @OneToMany(()=>SubComponent, (components)=> components.organization)
     sub_components: SubComponent[]
@@ -26,7 +26,7 @@ export class Organization{
     @OneToMany(()=>ApiKey, (apiKey)=>apiKey.organization)
     api_keys: ApiKey[]
 
-    @OneToMany(()=>OrganizationUser, (orgUser)=>orgUser.org)
+    @OneToMany(()=>OrganizationUser, (orgUser)=>orgUser.organization)
     members: OrganizationUser[]
 
 
