@@ -11,7 +11,7 @@ const AppDataSource= new DataSource({
     host:"localhost",
     port: 5050,
     database:"web_api_db",
-    synchronize: false,
+    synchronize: true,
     extra:{
         max: 5,
         connectionTimeoutMillis: 10000
