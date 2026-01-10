@@ -6,10 +6,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon dist/server.js",
-    "typeorm":"typeorm-ts-node-commonjs",
-    "migration:generate":"npm run typeorm -- migration:generate -d src/configs/appdatasource.config",
-    "migration:run":"npm run typeorm -- migration:run -d src/configs/appdatasource.config",
-    "migration:revert":"npm run typeorm -- migration:revert -d src/configs/appdatasource.config"
+    "typeorm": "typeorm-ts-node-commonjs",
+    "migration:generate": "npm run typeorm -- migration:generate -d src/configs/appdatasource.config",
+    "migration:run": "npm run typeorm -- migration:run -d src/configs/appdatasource.config",
+    "migration:revert": "npm run typeorm -- migration:revert -d src/configs/appdatasource.config"
   },
   "author": "",
   "license": "ISC",
@@ -22,7 +22,8 @@
     "express": "^5.2.1",
     "pg": "^8.16.3",
     "redis": "^5.10.0",
-    "reflect-metadata": "^0.2.2"
+    "reflect-metadata": "^0.2.2",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",

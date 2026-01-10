@@ -12,6 +12,8 @@ import AppDataSource from "../configs/appdatasource.config"
 import { Organization } from "../models/Organization.entity"
 import { User } from "../models/User.entity"
 import { OrganizationUser } from "../models/OrganizationUser.entity"
+import organizationService from "../services/organization.service"
+import client from "../configs/redis.configs"
 
 const userRepo = AppDataSource.getRepository(User)
 const orgRepo = AppDataSource.getRepository(Organization)
@@ -70,3 +72,94 @@ const createOrganization = async(req:any, res:any)=>{
 
 
 }
+
+const sendInvitation = async(req:any, res:any)=>{
+    // to invite users , we need the link to the org, 
+    // get the user we want to send to then we send right
+    //get the email of the user we want to send the invite to .
+    // const {email, organizationName} = req.body
+    
+
+    // if(!email||!organizationName) return res.status(401).json({message:"email field required "})
+    
+    // const response = organizationService.sendInvite(
+    //     email,
+    //     "",
+    //     organizationName
+    // )
+
+    // return res.status(200).json({message:"Invite sent successfully"})
+
+    const {email} = req.body
+    const userId = req.params.id
+
+    if(!userId) return res.status(401).json({message:"user not found"})
+    try{
+
+    const organization = await orgRepo.findOne({
+        where:{
+            created_by_id: userId
+        }
+    })
+    if(!organization)return res.status(404).json({message:"organization not found"})
+
+     const orgUser = await orgUserRepo.findOne({
+      where: {
+        user: { id: userId },
+        organization: { id: organization.id },
+      },
+      relations: ["user", "org"],
+    });
+       
+
+        if(!orgUser || (orgUser?.role !== "owner" && orgUser?.role !== "admin")) return res.status(400).json({message:"you don't have access to send invitation link"})
+
+    //     // get the user organization
+    // const organization = await orgUserRepo.findOne({
+    //     where:{
+    //         organization:user.organization
+    //     }
+    // })
+ 
+    
+    
+    const rawToken =  organizationService.generateInviteToken()
+    const hashedToken = await organizationService.hashInviteToken(rawToken)
+
+     // frontend invite link
+    const inviteLink = `${process.env.FRONTEND_URL}/accept-invite?token=${rawToken}&org=${organization.id}`;
+
+    // store invite in redis (24 hours)
+    await client.set(
+      `org_invite:${hashedToken}`,
+      JSON.stringify({
+        email,
+        organizationId: organization.id,
+        invitedBy: userId,
+      }),
+      { EX: 60 * 60 * 24 }
+    );
+
+ 
+
+
+       const response = organizationService.sendInvite(
+        email,
+        inviteLink.toString(),
+        organization.organization_name
+    )
+
+    return res.status(200).json({message:"Invite sent successfully", data: response})
+
+    
+}catch(err:any){
+    return res.status(500).json({error:err.message})
+}
+    
+    
+
+    
+
+}
+
+export default {createOrganization,sendInvitation }
