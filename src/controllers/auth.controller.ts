@@ -50,6 +50,7 @@ const handleSignin = async(req:any, res:any)=>{
     if(!isPasswordAccurate) {
         return res.status(401).send("password is inaccurate")
     }
+    
     return res.status(200).json({message: "Logged in successfully", email: user.email})
 
     }catch(err){
