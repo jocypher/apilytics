@@ -200,5 +200,35 @@ const resetPassword = async(req:any, res:any)=>{
 
 
 
+const updateUser = async(req:any, res:any)=>{
+    const {email, password, username} = req.body
+    const userId = req.id
+    
+    if(!userId) return res.status(400).json({message:"user id not found"})
+    
+    try{
+        let user = await userRepo.findOne({
+            where:{
+                id:userId
+            }
+        })
+    if(!user) return res.status(404).json({message:"User not found"})
+    
+    if(!isNaN(email)) user.email = email
+    if(!isNaN(password)) user.password_hash = await bcrypt.hash(password, 10)
+    if(!isNaN(username)) user.username = username
 
-export default  {handleSignup, handleSignin, forgotPassword, resetPassword, verifyOtp}
+    await userRepo.save(user)
+
+    return res.status(200).json({message:"update made successfully"})
+
+    }catch(err:any){
+        console.error(err)
+        return res.status(500).json({message:err.message})
+    }
+
+}
+
+
+
+export default  {handleSignup, handleSignin, forgotPassword, resetPassword, verifyOtp, updateUser}

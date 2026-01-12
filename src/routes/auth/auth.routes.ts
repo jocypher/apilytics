@@ -18,7 +18,12 @@ routes.post("/forgot-password", authController.forgotPassword)
 //routes.post("/getRedis", authController.validateToken)
 routes.post("/verify-otp", authController.verifyOtp)
 
+
+// resetting the user password
 routes.post("/reset-password", authController.resetPassword)
+
+// updating the user info
+routes.post("/update-info", authController.updateUser)
 
 
 
