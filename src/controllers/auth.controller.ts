@@ -4,8 +4,7 @@ import AppDataSource from "../configs/appdatasource.config";
 import { User } from "../models/User.entity";
 import authService from "../services/auth.service"
 import client from "../configs/redis.configs";
-
-
+import jwt from "jsonwebtoken";
 
 let userRepo = AppDataSource.getRepository(User)
 
@@ -25,7 +24,7 @@ const handleSignup = async(req:any, res:any)=>{
     })
 
     await userRepo.save(user)
-    return res.status(201).json({message: "user account created", username: email})
+    return res.status(201).json({message: "user account created", email: email})
     
 }
 
@@ -50,15 +49,20 @@ const handleSignin = async(req:any, res:any)=>{
     if(!isPasswordAccurate) {
         return res.status(401).send("password is inaccurate")
     }
-    
-    return res.status(200).json({message: "Logged in successfully", email: user.email})
+    // after we authenticate the user we need to sign the user with the token 
+    const token = jwt.sign({
+        "id":user.id,
+        "email":user.email
+    }, 
+    process.env.JWT_SECRET_KEY!,{algorithm:"HS256", 
+        expiresIn:3600})
+
+    return res.status(200).json({message: "Logged in successfully", email: user.email, jwt_token:token})
 
     }catch(err){
-        res.send(err)
+        console.error(err)
+        res.status(500).send(err)
     }
-
-    
-
 }
 
 // implementing forgot password 

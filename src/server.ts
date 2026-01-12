@@ -4,6 +4,7 @@ dotenv.config()
 import AppDataSource from './configs/appdatasource.config';
 import auth from './routes/auth/auth.routes';
 import client from './configs/redis.configs';
+import org from "./routes/organization/organization.routes"
 
 
 
@@ -17,6 +18,7 @@ AppDataSource.initialize().then(()=>{
     console.log("Database has been initialized")
     client.connect()
     app.use("/api/v1/auth", auth)
+    app.use("/api/v1/organization", org)
 
     app.listen(PORT, ()=>console.log(`Server running on port ${PORT}`))
 

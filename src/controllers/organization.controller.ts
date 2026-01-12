@@ -7,7 +7,6 @@
 // 1. he should be assigned an admin automatically to that organization
 // 2. his invitation status should be accept
 
-import { Or } from "typeorm"
 import AppDataSource from "../configs/appdatasource.config"
 import { Organization } from "../models/Organization.entity"
 import { User } from "../models/User.entity"
@@ -20,13 +19,12 @@ const orgRepo = AppDataSource.getRepository(Organization)
 const orgUserRepo = AppDataSource.getRepository(OrganizationUser)
 
 // creating organization
-
 const createOrganization = async(req:any, res:any)=>{
     
     // to create an organization , we first need to 
     // get what details will be needed from the creator
     const {org_name} = req.body
-    const {id} = req.params
+    const id = req.id
     try{
         const user = await userRepo.findOne({
         where :{
@@ -40,6 +38,7 @@ const createOrganization = async(req:any, res:any)=>{
     let organizationCreated = orgRepo.create({
         organization_name: org_name,
         created_by_id: user.id,
+        created_by: user
     })
 
     // save the organization to the db 
@@ -47,13 +46,15 @@ const createOrganization = async(req:any, res:any)=>{
     
     let organizationUser = orgUserRepo.create({
         display_name: user.username,
+        user: user,
         organization: organizationCreated,
         role: "owner",
         invite_status:"accepted",
+        
        
     })
  
-
+    // save the org user in the system
     await orgUserRepo.save(organizationUser)
 
     let orgResult = {
@@ -61,7 +62,8 @@ const createOrganization = async(req:any, res:any)=>{
         "created_by":user.username,
         "org_role":organizationUser.role,
         "created_at":organizationCreated.created_at,
-        "invited_by":null
+        "invited_by":null,
+        "invite_status": organizationUser.invite_status
     }
 
     return res.status(201).json({message: "organization created", org:orgResult})
@@ -73,6 +75,117 @@ const createOrganization = async(req:any, res:any)=>{
 
 }
 
+
+// get all organizations created by user 
+const getAllOrganization = async(req:any,res:any)=>{
+    const id = req.id
+    try{
+        const user = await userRepo.findOne({
+            where:{
+                id:id,
+                
+            }
+        })
+        if(!user) return res.status(403).json({message:"user not found"})
+        const orgs = await orgRepo.findOne({
+    where   :{
+        created_by_id: user.id,
+        
+    },
+    relations:["created_by"]
+})
+    console.log(orgs)
+    return res.status(200).json({orgs:orgs})
+
+    }catch(
+        err:any
+    ){
+        console.error(err)
+        return res.status(500).json({message:err})
+    }
+
+}
+
+
+// DELETE ORGANIZATION 
+const deleteOrganization = async(req:any, res:any) =>{
+    const id = req.id
+    const orgId = req.params.id
+    try{
+        const orgUser = await orgUserRepo.findOne({
+            where:{
+                user: {id: id},
+                organization:{id: orgId },
+                role:"owner"
+            },
+            relations: ["user", "organization"]
+        })
+        console.log(orgUser)
+    if (!orgUser || !["admin", "owner"].includes(orgUser.role)) {
+      return res.status(403).json({
+        message: "You are not allowed to delete this organization"
+      });
+    }
+
+    // delete children FIRST (safe even with cascade)
+    await orgUserRepo.delete({
+      organization: { id: orgId }
+    });
+
+    await orgRepo.delete({ id: orgId });
+        
+
+        return res.status(200).json({message: `organization with id ${orgId} deleted successfully`})
+        
+
+    }catch(err){
+        console.error("The errors involved in the system are", err)
+    }
+
+}
+
+
+// update organization name
+const updateOrganization = async(req:any, res:any) =>{
+    const orgId = req.params.id
+    const {name} = req.body
+    const id = req.id
+
+    if(!orgId) return res.status(400).json({message:"Invalid id"})
+    if(!name) return res.status(400).json({message:"Bad request"})
+    // first we need to verify the user who wants to make the update on the organization
+try{
+ const org = await orgRepo.findOne({
+        where:{
+            id:orgId,
+            created_by: {id: id}
+        },
+        relations:["user"]
+    })
+    if(!org) return res.status(400).json({message:"Organization not found"})
+
+    const orgUser = await orgUserRepo.findOne({
+        where:{
+            organization: {organization_name : org.organization_name}
+        },
+        relations:["user", "organization"]
+    })
+
+    if(!orgUser || (orgUser?.role !== "owner" && orgUser.role !=="admin")) return res.status(401).json({message:"User not authorized to update organization name"})
+
+    if(name) org.organization_name = name
+
+    return res.status(200).json({message:"update successful"})
+}catch(err){
+    console.log(err)
+    return res.status(500).json({message:`The error is ${err}`})
+}
+   
+}
+
+
+
+// send invitation to user
 const sendInvitation = async(req:any, res:any)=>{
     // to invite users , we need the link to the org, 
     // get the user we want to send to then we send right
@@ -91,7 +204,7 @@ const sendInvitation = async(req:any, res:any)=>{
     // return res.status(200).json({message:"Invite sent successfully"})
 
     const {email} = req.body
-    const userId = req.params.id
+    const userId = req.id
 
     if(!userId) return res.status(401).json({message:"user not found"})
     try{
@@ -155,11 +268,43 @@ const sendInvitation = async(req:any, res:any)=>{
 }catch(err:any){
     return res.status(500).json({error:err.message})
 }
-    
-    
-
-    
+ 
 
 }
 
-export default {createOrganization,sendInvitation }
+const getMembersInOrganization = async(req:any, res:any)=>{
+    const userId = req.id
+    const orgId = req.params.id
+
+    if (!userId || !orgId) {
+    return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try{
+        const org_members = orgUserRepo.find({
+            where:{
+                user:{id:userId},
+                organization:{id: orgId}
+            },
+            relations:["user", "organization"]
+        })
+
+    if (!org_members) {
+      return res.status(403).json({ message: "Not a member of this organization" });
+    }
+
+    const members = await orgUserRepo.find({
+        where:{
+            organization:{id:orgId}
+        },
+        relations:["user"]
+    })
+
+        console.log (members)
+        return res.status(200).json({message:members })
+}catch(err:any){
+    return res.status(500).json({message:err.message})
+}
+}
+
+export default {createOrganization,sendInvitation,getAllOrganization, deleteOrganization, updateOrganization, getMembersInOrganization}
