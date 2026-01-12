@@ -9,8 +9,13 @@ const routes = express.Router()
 // creating organizationn
 routes.post("/create-org",verifyJwtMiddlewares.verifyJwt,organizationController.createOrganization)
 
+
 // getting all organization
 routes.get("/all", verifyJwtMiddlewares.verifyJwt,organizationController.getAllOrganization)
+
+
+// updating the organization information
+routes.put("/org/:id", verifyJwtMiddlewares.verifyJwt, organizationController.updateOrganization)
 
 // delete organization
 routes.delete("/delete/:id", verifyJwtMiddlewares.verifyJwt, organizationController.deleteOrganization)
@@ -20,6 +25,10 @@ routes.get("/members/:id", verifyJwtMiddlewares.verifyJwt, organizationControlle
 
 // sending user invite
 routes.post("/send-invite", verifyJwtMiddlewares.verifyJwt, organizationController.sendInvitation)
+
+
+// accepting user invite
+routes.post("/accept-invite", organizationController.acceptOrganizationInvite)
 
 // 
 
