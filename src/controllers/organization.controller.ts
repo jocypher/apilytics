@@ -375,4 +375,4 @@ const acceptOrganizationInvite = async(req:any, res:any)=>{
     
 } 
 
-export default {createOrganization,sendInvitation,getAllOrganization, deleteOrganization, updateOrganization, getMembersInOrganization}
+export default {createOrganization,sendInvitation,getAllOrganization, deleteOrganization, updateOrganization, getMembersInOrganization, acceptOrganizationInvite}
