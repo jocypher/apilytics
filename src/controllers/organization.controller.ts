@@ -13,6 +13,7 @@ import { User } from "../models/User.entity"
 import { OrganizationUser } from "../models/OrganizationUser.entity"
 import organizationService from "../services/organization.service"
 import client from "../configs/redis.configs"
+import bcrypt from "bcryptjs"
 
 const userRepo = AppDataSource.getRepository(User)
 const orgRepo = AppDataSource.getRepository(Organization)
@@ -87,7 +88,7 @@ const getAllOrganization = async(req:any,res:any)=>{
             }
         })
         if(!user) return res.status(403).json({message:"user not found"})
-        const orgs = await orgRepo.findOne({
+        const orgs = await orgRepo.find({
     where   :{
         created_by_id: user.id,
         
@@ -95,8 +96,7 @@ const getAllOrganization = async(req:any,res:any)=>{
     relations:["created_by"]
 })
     console.log(orgs)
-    return res.status(200).json({orgs:orgs})
-
+    return res.status(200).json(orgs)
     }catch(
         err:any
     ){
@@ -240,7 +240,7 @@ const sendInvitation = async(req:any, res:any)=>{
     const hashedToken = await organizationService.hashInviteToken(rawToken)
 
      // frontend invite link
-    const inviteLink = `${process.env.FRONTEND_URL}/accept-invite?token=${rawToken}&org=${organization.id}`;
+    const inviteLink = `${process.env.FRONTEND_URL}/accept-invite?token=${rawToken}&orgId=${organization.id}`;
 
     // store invite in redis (24 hours)
     await client.set(
@@ -301,10 +301,78 @@ const getMembersInOrganization = async(req:any, res:any)=>{
     })
 
         console.log (members)
-        return res.status(200).json({message:members })
+        return res.status(200).json(members)
 }catch(err:any){
     return res.status(500).json({message:err.message})
 }
 }
+
+
+// accept organization invite
+const acceptOrganizationInvite = async(req:any, res:any)=>{
+   const {token, orgId} = req.params
+   const userId = req.id
+
+   if(!userId) return res.status(400).json({message: "id not found"})
+
+   if(!token || !orgId) return res.status(400).json({message:"token and org id invalid"})
+
+    try{
+        const user = await userRepo.findOne({
+        where:{
+            id:userId
+        }
+    })
+    if(!user) return res.status(404).json({message:"user does not exist"})
+
+    // get token from the redis client
+    // compare to see if there's match
+    const keys = await client.keys(`org_invite:*`)
+
+    let inviteData:any = null
+    for(const key of keys){
+        const data = await client.get(key)
+        if(data){
+            const parsed = JSON.parse(data)
+            const match = await bcrypt.compare(token, key.replace("org_invite:", ""));
+            if(match && parsed.organizationId == orgId && parsed.email == user.email){
+                inviteData = parsed
+                break;
+            }
+        }
+
+    }
+    let organization = await orgRepo.findOne({
+        where:{
+            id:orgId
+        }
+    })
+    if(!organization) return res.status(500).json({message:"no org available"})
+
+    // check the existing membership 
+    const existingMembership = await orgUserRepo.findOne({
+        where:{
+            user :{id: userId},
+            organization: {id: orgId}
+        },
+        relations:["user", "organization"]
+    })
+    if(existingMembership) return res.status(400).json({message:"User already a member of the organization"})
+    // create the user 
+    const orgUser = orgUserRepo.create({
+        display_name: user.username,
+        user: user,
+        organization: organization,
+        role: "member",
+        invite_status:"accepted",
+    })
+
+    await orgUserRepo.save(orgUser)
+
+    }catch(err:any){
+        return res.status(500).json({message:err.message})
+    }
+    
+} 
 
 export default {createOrganization,sendInvitation,getAllOrganization, deleteOrganization, updateOrganization, getMembersInOrganization}

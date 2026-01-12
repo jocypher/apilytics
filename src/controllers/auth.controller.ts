@@ -55,7 +55,7 @@ const handleSignin = async(req:any, res:any)=>{
         "email":user.email
     }, 
     process.env.JWT_SECRET_KEY!,{algorithm:"HS256", 
-        expiresIn:3600})
+        expiresIn:"24h"})
 
     return res.status(200).json({message: "Logged in successfully", email: user.email, jwt_token:token})
 

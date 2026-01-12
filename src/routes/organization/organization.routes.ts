@@ -16,7 +16,7 @@ routes.get("/all", verifyJwtMiddlewares.verifyJwt,organizationController.getAllO
 routes.delete("/delete/:id", verifyJwtMiddlewares.verifyJwt, organizationController.deleteOrganization)
 
 // get members in an organization 
-routes.get("/members", verifyJwtMiddlewares.verifyJwt, organizationController.getMembersInOrganization)
+routes.get("/members/:id", verifyJwtMiddlewares.verifyJwt, organizationController.getMembersInOrganization)
 
 // sending user invite
 routes.post("/send-invite", verifyJwtMiddlewares.verifyJwt, organizationController.sendInvitation)
