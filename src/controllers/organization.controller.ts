@@ -171,7 +171,7 @@ try{
         relations:["user", "organization"]
     })
 
-    if(!orgUser || (orgUser?.role !== "owner" && orgUser.role !=="admin")) return res.status(401).json({message:"User not authorized to update organization name"})
+    if(!organizationService.isOrgAdminOrOwner(orgUser)) return res.status(401).json({message:"User not authorized to update organization name"})
 
     if(name) org.organization_name = name
 
@@ -259,7 +259,7 @@ const sendInvitation = async(req:any, res:any)=>{
     });
        
 
-        if(!orgUser || (orgUser?.role !== "owner" && orgUser?.role !== "admin")) return res.status(400).json({message:"you don't have access to send invitation link"})
+        if(!organizationService.isOrgAdminOrOwner(orgUser)) return res.status(400).json({message:"you don't have access to send invitation link"})
 
     //     // get the user organization
     // const organization = await orgUserRepo.findOne({

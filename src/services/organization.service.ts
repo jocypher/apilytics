@@ -1,6 +1,7 @@
 import axios from "axios";
 import { url } from "node:inspector";
 import bcrypt from "bcryptjs"
+import { OrganizationUser } from "../models/OrganizationUser.entity";
 
 const sendInvite = async(
     email:string, 
@@ -59,4 +60,11 @@ const hashInviteToken = async(token:string):Promise<string>=>{
     const hashedToken = await bcrypt.hash(token, 10)
     return hashedToken
 }
-export default {sendInvite, generateInviteToken, hashInviteToken}
+
+
+const isOrgAdminOrOwner = (membership: OrganizationUser | null): boolean => {
+  return !!membership && ["owner", "admin"].includes(membership.role)
+}
+
+
+export default {sendInvite, generateInviteToken, hashInviteToken, isOrgAdminOrOwner}
