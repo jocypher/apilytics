@@ -411,6 +411,35 @@ const acceptOrganizationInvite = async(req:any, res:any)=>{
 
 
 const updateUserRole = async(req:any, res:any)=>{
+    const {targetUserId, orgId} = req.params
+    const reqUserId = req.id
+
+    if(!targetUserId || !orgId) return res.status(400).json({message:"Missing required parameters"})
+    try{
+        let existingMembership = await orgUserRepo.findOne({
+            where:{
+                user:{id:targetUserId},
+                organization:{id:orgId},
+
+            },
+            relations:["organization", "user"]
+        })
+        if(!existingMembership) return res.status(404).json({message:"user does not exist in the organization"})
+        
+        if(!organizationService.isOrgAdminOrOwner(reqUserId)){
+            return res.status(403).json({message:"Forbidden"})
+        }
+
+        existingMembership.role = "admin"
+
+        await orgUserRepo.save(existingMembership)
+
+        return res.status(200).json({message:"updated role successfully"})
+        
+    }catch(err:any){
+        console.error(err)
+        return res.status(500).json({message:`Server error ${err}`})
+    }
 
 }
 
