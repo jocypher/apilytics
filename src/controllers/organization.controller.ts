@@ -443,4 +443,4 @@ const updateUserRole = async(req:any, res:any)=>{
 
 }
 
-export default {createOrganization,sendInvitation,getAllOrganization, deleteOrganization, updateOrganization, getMembersInOrganization, acceptOrganizationInvite, getOrganizationById}
+export default {createOrganization,sendInvitation,getAllOrganization, deleteOrganization, updateOrganization, getMembersInOrganization, acceptOrganizationInvite, getOrganizationById, updateUserRole}
