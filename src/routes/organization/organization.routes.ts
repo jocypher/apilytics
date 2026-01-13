@@ -23,6 +23,9 @@ routes.delete("/delete/:id", verifyJwtMiddlewares.verifyJwt, organizationControl
 // get members in an organization 
 routes.get("/members/:id", verifyJwtMiddlewares.verifyJwt, organizationController.getMembersInOrganization)
 
+// get organization by id
+routes.get("/org/:id",verifyJwtMiddlewares.verifyJwt, organizationController.getOrganizationById)
+
 // sending user invite
 routes.post("/send-invite", verifyJwtMiddlewares.verifyJwt, organizationController.sendInvitation)
 
@@ -30,7 +33,7 @@ routes.post("/send-invite", verifyJwtMiddlewares.verifyJwt, organizationControll
 // accepting user invite
 routes.post("/accept-invite", organizationController.acceptOrganizationInvite)
 
-// 
+
 
 
 

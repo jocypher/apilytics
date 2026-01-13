@@ -184,6 +184,40 @@ try{
 }
 
 
+// get organization by id
+const getOrganizationById = async(req:any, res:any)=>{
+    const orgId = req.params.id
+    const userId = req.id
+    // to get organization by id , 
+    // check if the org exist and also check the membership of the user 
+    if(!orgId) return res.status(404).json({message:`organization with id: ${orgId} not found`})
+        try{
+            const membership = await orgUserRepo.findOne({
+                where:{
+                    organization:{id:orgId},
+                    user:{id:userId}
+                },
+                relations:["organization", "user"]
+            })
+
+            if(!membership) return res.status(401).json({message:"user is not a member of the the organization"})
+            
+            const organization = await orgRepo.findOne({
+                where:{
+                    id: orgId
+                }
+            })
+            if(!organization) return res.status(404).json({message:"Organization doesn't exist"})
+            
+            return res.status(200).json({organization:organization})
+            
+        }
+        catch(err){
+            console.error(`The error involved is ${err}`)
+            return res.status(500).json({message:`Server error is ${err}`})
+        }
+}
+
 
 // send invitation to user
 const sendInvitation = async(req:any, res:any)=>{
@@ -375,4 +409,9 @@ const acceptOrganizationInvite = async(req:any, res:any)=>{
     
 } 
 
-export default {createOrganization,sendInvitation,getAllOrganization, deleteOrganization, updateOrganization, getMembersInOrganization, acceptOrganizationInvite}
+
+const updateUserRole = async(req:any, res:any)=>{
+
+}
+
+export default {createOrganization,sendInvitation,getAllOrganization, deleteOrganization, updateOrganization, getMembersInOrganization, acceptOrganizationInvite, getOrganizationById}
