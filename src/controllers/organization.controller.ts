@@ -410,6 +410,7 @@ const acceptOrganizationInvite = async(req:any, res:any)=>{
 } 
 
 
+// update the user role for the organization
 const updateUserRole = async(req:any, res:any)=>{
     const {targetUserId, orgId} = req.params
     const reqUserId = req.id
