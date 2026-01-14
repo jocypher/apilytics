@@ -12,7 +12,7 @@ const serviceUserRepo = AppDataSource.getRepository(SubComponentUser)
 // We need to work on the controller of the sub component
 const createService = async(req:any, res:any) =>{
     const userId = req.id
-    const orgId = req.params.id
+    const {orgId} = req.params
     const {name} = req.body
 
     if(!orgId) return res.status(404).json({message:"Invalid ID"})
@@ -219,22 +219,38 @@ const getAssignedUserForService = async(req:any, res:any)=>{
     try{
         const orgUser = await orgUserRepo.findOne({
             where:{
-                id:orgId,
-                user:userId
+                organization:{id: orgId},
+                user:{id:userId}
             },
             relations:["organization", "user"]
         })
+    if (!orgUser) {
+      return res.status(403).json({ message: "Not a member" })
+    }
+
+    const service = await serviceRepo.findOne({
+      where: {
+        id: svcId,
+        organization: { id: orgId }
+      }
+    })
+
+    if (!service) {
+      return res.status(404).json({ message: "Service not found" })
+    }
         if(!organizationService.isOrgAdminOrOwner(orgUser)){
             return res.status(403).json({message:"Forbidden"})
         }
         // since. we have now confirmed we that the user is in the eorganization and also an admin
         const [assignments, total] = await serviceUserRepo.findAndCount({
             where:{
-                sub_component:{id:svcId} 
+                sub_component:{id:svcId}
             },
-            relations:["sub_component"]
+            relations:["user"],
+            skip,
+            take:limit
         })
-        if(!assignments || !total) return res.status(404).json({message:"No assigned users"})
+        if(assignments.length === 0) return res.status(404).json({message:"No assigned users"})
         const users = assignments.map((a)=> a.user)
         return res.status(200).json({
              page,

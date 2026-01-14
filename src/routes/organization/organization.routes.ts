@@ -34,7 +34,8 @@ routes.post("/send-invite", verifyJwtMiddlewares.verifyJwt, organizationControll
 routes.post("/accept-invite", organizationController.acceptOrganizationInvite)
 
 
-
+// updating user role
+routes.post("/update-role/:targetUserId/:orgId", verifyJwtMiddlewares.verifyJwt, organizationController .updateUserRole)
 
 
 
