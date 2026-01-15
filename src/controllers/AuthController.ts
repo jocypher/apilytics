@@ -66,6 +66,8 @@ const handleSignin = async (req: any, res: any) => {
       { algorithm: 'HS256', expiresIn: '24h' }
     )
 
+    await client.set(`auth:${user.id}`, token, { EX: 3600 })
+
     return res.status(200).json({
       message: 'Logged in successfully',
       email: user.email,
@@ -232,6 +234,28 @@ const updateUser = async (req: any, res: any) => {
   }
 }
 
+const handleLogout = async (req: any, res: any) => {
+  const userId = req.id
+  try {
+    const foundUser = await userRepo.findOne({
+      where: {
+        id: userId,
+      },
+    })
+    if (!foundUser) return res.status(404).jsoon({ message: 'user not found' })
+
+    let token = await client.get(`auth:${userId}`)
+    if (!token) return res.status(400).json({ message: 'Unauthorized' })
+
+    await client.del(`auth:${userId}`)
+
+    return res.status(200).json({ message: 'Logout Successful' })
+  } catch (err: any) {
+    console.log(err)
+    res.status(500).json({ message: err.message })
+  }
+}
+
 export default {
   handleSignup,
   handleSignin,
@@ -239,4 +263,5 @@ export default {
   resetPassword,
   verifyOtp,
   updateUser,
+  handleLogout,
 }

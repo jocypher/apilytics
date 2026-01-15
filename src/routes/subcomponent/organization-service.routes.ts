@@ -3,7 +3,7 @@
 // we also need to ensure users
 
 import express from 'express'
-import serviceController from '../../controllers/organization-service.controller'
+import serviceController from '../../controllers/OrganizationServiceController'
 import verifyJwtMiddlewares from '../../middlewares/verifyJwt.middlewares'
 const routes = express.Router()
 

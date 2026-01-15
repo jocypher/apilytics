@@ -22,7 +22,7 @@ const appDataSource = new DataSource({
     : false,
   migrations: ['src/migrations/*.{js,ts}'],
   logging: false,
-  entities: [__dirname + '/../models/**/*.entity.{js,ts}'],
+  entities: [__dirname + '/../models/**/.entity.{js,ts}'],
 })
 
 export default appDataSource

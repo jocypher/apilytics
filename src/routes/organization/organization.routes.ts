@@ -1,6 +1,6 @@
 import express from 'express'
 import verifyJwtMiddlewares from '../../middlewares/verifyJwt.middlewares'
-import organizationController from '../../controllers/organization.controller'
+import organizationController from '../../controllers/OrganizationController'
 
 const routes = express.Router()
 

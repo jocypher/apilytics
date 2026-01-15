@@ -1,6 +1,6 @@
 import express from 'express'
 const routes = express.Router()
-import authController from '../../controllers/auth.controller'
+import authController from '../../controllers/AuthController'
 
 // working on the auth routes
 
@@ -21,5 +21,8 @@ routes.post('/reset-password', authController.resetPassword)
 
 // updating the user info
 routes.post('/update-info', authController.updateUser)
+
+// loggin out as a user
+routes.post("/logout", authController.handleLogout)
 
 export default routes
