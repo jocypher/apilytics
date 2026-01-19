@@ -11,7 +11,7 @@ const app = express()
 const PORT = process.env.PORT || 4000
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
-
+app.use(reqLogger)
 AppDataSource.initialize()
   .then(() => {
     console.log('Database has been initialized')
@@ -19,9 +19,10 @@ AppDataSource.initialize()
     app.use('/api/v1/auth', auth)
     app.use('/api/v1/organization', org)
     app.use('/api/v1/service', service)
-
+      app.use(errorLogger)
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
   })
+  
   .catch((err: any) => {
     console.error(err)
   })
