@@ -6,7 +6,8 @@ import auth from './routes/auth/auth.routes'
 import client from './configs/redis.configs'
 import org from './routes/organization/organization.routes'
 import service from './routes/subcomponent/organization-service.routes'
-
+import reqLogger from "./middlewares/reqlogger.middleware"
+import errorLogger from "./middlewares/errorlog.middleware"
 const app = express()
 const PORT = process.env.PORT || 4000
 app.use(express.json())
@@ -26,3 +27,5 @@ AppDataSource.initialize()
   .catch((err: any) => {
     console.error(err)
   })
+
+  
