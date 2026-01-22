@@ -23,12 +23,19 @@ if(!logMessage || !logStatus || !logTag){
  try{
    const orgUser = await orgUserRepo.findOne({
     where:{
-      id: userId
-    }
+      organization: {id: orgId},
+      user: {id: userId},
+      
+    },
+     relations: ["user", "organization"]
    })
-   if(!orgUser || !organizationService.isOrgAdminOrOwner(orgUser)){
+   if(!orgUser){
     return res.status(404).json({message:"User Not found"})
    }
+
+    if(!organizationService.isOrgAdminOrOwner(orgUser)){
+      return res.status(401).json({message:"Forbidden"})
+    }
 
    const orgService = await orgServiceRepo.findOne({
     where:{
@@ -61,6 +68,49 @@ if(!logMessage || !logStatus || !logTag){
 }
 
 
-const generateManualLogs = async(req:any,res:any)=>{
+// POST /org/:orgId/service/:serviceId/logs/manual
 
+const getAllManualLogs = async(req:any,res:any)=>{
+  const userId = req.id
+  const {orgId, serviceId} = req.params
+
+  try{
+    const orgUser = await orgUserRepo.findOne({
+      where:{
+        user: {id: userId},
+        organization:{id: orgId}
+      },
+      relations: ["user", "organization"]
+    })
+
+    if(!orgUser) return res.status(404).json({message: `Not a member of the organization`})
+    
+      // check the assigned User
+      const assignedUser = await orgServiceRepo.findOne({
+        where:{
+          id: serviceId,
+          users:{user: orgUser.user}, 
+          
+        },
+        relations: ["user"]
+      })
+      if(!assignedUser) return res.status(401).json({message: "User not assigned to this service"})
+      
+      let logs = await logRepo.find({
+        where:{
+          sub_component: {id: serviceId}
+        }
+      })
+
+      if(logs.length == 0 ){
+        return res.status(200).json({message: "No manual logs created"})
+      }
+
+      return res.status(200).json({message: logs})
+      
+
+  }catch(err:any){
+      console.log(err)
+      return res.status(500).json({message: err.message})
+  }
 }

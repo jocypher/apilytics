@@ -245,7 +245,7 @@ const sendInvitation = async (req: any, res: any) => {
         user: { id: userId },
         organization: { id: organization.id },
       },
-      relations: ['user', 'org'],
+      relations: ['user', 'organization'],
     })
 
     if (!organizationService.isOrgAdminOrOwner(orgUser))

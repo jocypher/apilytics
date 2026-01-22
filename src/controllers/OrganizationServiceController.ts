@@ -47,12 +47,13 @@ const createService = async (req: any, res: any) => {
 const assignUserToService = async (req: any, res: any) => {
   const userId = req.id
   const { orgId, serviceId, roleToChangeId } = req.params
-
+ // confirm field parameters 
   if (!orgId || !serviceId || !roleToChangeId) {
     return res.status(400).json({ message: 'Missing required parameters' })
   }
 
   try {
+    // check user existence in the org
     const requesterMembership = await orgUserRepo.findOne({
       where: {
         organization: { id: orgId },
@@ -68,6 +69,7 @@ const assignUserToService = async (req: any, res: any) => {
       return res.status(401).json({ message: 'User is unauthorized' })
     }
 
+    // the target member we want to assign the service 
     const targetMembership = await orgUserRepo.findOne({
       where: {
         organization: { id: orgId },
@@ -87,14 +89,17 @@ const assignUserToService = async (req: any, res: any) => {
         id: serviceId,
         organization: { id: orgId },
       },
+      relations: ["organization"]
     })
     if (!service) return res.status(404).json({ message: 'Service not found' })
 
     const existingAssignment = await serviceUserRepo.findOne({
       where: {
         user: { id: targetMembership.user.id },
+        
         sub_component: { id: service.id },
       },
+      relations: ["user"]
     })
 
     if (existingAssignment) {
@@ -173,6 +178,7 @@ const getServiceById = async (req: any, res: any) => {
         organization: { id: orgId },
         user: { id: requesterId },
       },
+      relations: ['organization', 'user']
     })
 
     if (!membership)
