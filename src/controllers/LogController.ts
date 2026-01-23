@@ -55,7 +55,7 @@ if(!logMessage || !logStatus || !logTag){
 
     })
 
-    const logs =  await logRepo.save(createManualLogs)
+      await logRepo.save(createManualLogs)
 
     return res.status(200).json({message: `Logs created `})
    
