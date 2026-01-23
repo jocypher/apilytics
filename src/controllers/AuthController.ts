@@ -256,6 +256,23 @@ const handleLogout = async (req: any, res: any) => {
   }
 }
 
+
+const getCurrentUser = async(req: any, res:any) =>{
+  const userId = req.id
+  try{
+
+    const user = await userRepo.findOne({
+      where:{
+        id: userId
+      }
+    })
+    if(!user) return res.status(404).json({messae: "user not found"})
+    
+      return res.status(200).json(user)
+  }catch(err:any){
+    return res.status(500).json({message: err.message|| "Internal Server Error"})
+  }
+}
 export default {
   handleSignup,
   handleSignin,
@@ -264,4 +281,6 @@ export default {
   verifyOtp,
   updateUser,
   handleLogout,
+  getCurrentUser
+
 }

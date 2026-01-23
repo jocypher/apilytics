@@ -1,28 +1,34 @@
 import express from 'express'
 const routes = express.Router()
 import authController from '../../controllers/AuthController'
+import verifyJwtMiddlewares from '../../middlewares/verifyJwt.middlewares'
 
 // working on the auth routes
 
-// creating the user account
+// POST /register
 routes.post('/register', authController.handleSignup)
 
-// login the user
+// POST /login
 routes.post('/login', authController.handleSignin)
 
-// forgot password
+// POST /forgot-password
 routes.post('/forgot-password', authController.forgotPassword)
 
-//routes.post("/getRedis", authController.validateToken)
+// POST /verify-otp
 routes.post('/verify-otp', authController.verifyOtp)
 
-// resetting the user password
+// POST /reset-password
 routes.post('/reset-password', authController.resetPassword)
 
-// updating the user info
+// PUT /update
 routes.post('/update-info', authController.updateUser)
 
-// loggin out as a user
+// POST /logout
 routes.post("/logout", authController.handleLogout)
+
+
+
+// GET /me
+routes.get("/me", verifyJwtMiddlewares.verifyJwt, authController.getCurrentUser)
 
 export default routes
