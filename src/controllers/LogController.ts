@@ -4,22 +4,32 @@ import { SubComponent } from "../models/organization-service.entity"
 import {Log} from "../models/log-item.entity"
 import organizationService from "../services/organization.service"
 import { OrganizationUser } from "../models/organization-user.entity"
+import { LogTag } from "../models/log-tag.entity"
 const userRepo = AppDataSource.getRepository(User)
 const orgUserRepo = AppDataSource.getRepository(OrganizationUser)
 const orgServiceRepo = AppDataSource.getRepository(SubComponent)
 const logRepo = AppDataSource.getRepository(Log)
-
+const logTagRepo = AppDataSource.getRepository(LogTag)
 // This controller will handle both the manual logs and the automated logs
 
 const createManualLogs = async(req:any,res:any)=>{
 const userId = req.id
 const {orgId,serviceId} = req.params
-const {logMessage, logStatus, logTag} = req.body
+const {logMessage, logStatus, logTagId} = req.body
 
-if(!logMessage || !logStatus || !logTag){
+if(!logMessage || !logStatus || !logTagId){
     return res.status(400).json({message: "Required field parameters"})
 }
  try{
+  const tag = await logTagRepo.findOne({
+    where:{
+      id: logTagId
+    }
+  })
+  
+if (!tag) {
+  return res.status(400).json({ message: "Invalid log tag" });
+}
    const orgUser = await orgUserRepo.findOne({
     where:{
       organization: {id: orgId},
@@ -45,11 +55,11 @@ if(!logMessage || !logStatus || !logTag){
 
    if(!orgService) return res.status(401).json({message: "The organization with the service isn't available"})
 
-
+    // TODO: change tags: logTagId to logTag: tag
     const createManualLogs = logRepo.create({
       message: logMessage,
       logLevel: logStatus,
-      tags: logTag,
+      tags: logTagId,
       created_by: orgUser.user,
       sub_component: orgService,
 
