@@ -6,6 +6,7 @@ import auth from './routes/auth/auth.routes'
 import client from './configs/redis.configs'
 import org from './routes/organization/organization.routes'
 import service from './routes/subcomponent/organization-service.routes'
+import logs from './routes/logs/logs.routes'
 import reqLogger from "./middlewares/reqlogger.middleware"
 import errorLogger from "./middlewares/errorlog.middleware"
 const app = express()
@@ -20,6 +21,8 @@ AppDataSource.initialize()
     app.use('/api/v1/auth', auth)
     app.use('/api/v1/organization', org)
     app.use('/api/v1/service', service)
+    app.use('api/v1/logs', logs)
+    
       app.use(errorLogger)
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
   })

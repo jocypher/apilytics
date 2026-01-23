@@ -3,6 +3,7 @@ import { OrganizationUser } from '../models/organization-user.entity'
 import { SubComponent } from '../models/organization-service.entity'
 import { SubComponentUser } from '../models/org-service-user.entity'
 import organizationService from '../services/organization.service'
+import { User } from '../models/user-model.entity'
 
 const orgUserRepo = AppDataSource.getRepository(OrganizationUser)
 const serviceRepo = AppDataSource.getRepository(SubComponent)
@@ -253,7 +254,7 @@ const getAssignedUserForService = async (req: any, res: any) => {
     })
     if (assignments.length === 0)
       return res.status(404).json({ message: 'No assigned users' })
-    const users = assignments.map((a) => a.user)
+    const users = assignments.map((a:SubComponentUser) => a.user)
     return res.status(200).json({
       page,
       limit,

@@ -7,39 +7,42 @@ import serviceController from '../../controllers/OrganizationServiceController'
 import verifyJwtMiddlewares from '../../middlewares/verifyJwt.middlewares'
 const routes = express.Router()
 
-// creating a service
+// POST /:orgId
 routes.post(
   '/:orgId',
   verifyJwtMiddlewares.verifyJwt,
   serviceController.createService
 )
 
-// assign role to service
+// POST /assign/:orgId/:serviceId/:roleToChangeId
 routes.post(
   '/assign/:orgId/:serviceId/:roleToChangeId',
   verifyJwtMiddlewares.verifyJwt,
   serviceController.assignUserToService
 )
 
-// delete the service
+// DELETE /:orgId/:svcId
 routes.delete(
   '/:orgId/:svcId',
   verifyJwtMiddlewares.verifyJwt,
   serviceController.deleteService
 )
 
-// get service by id
+// GET /:orgId/:serviceId
 routes.get(
-  '/service/:orgId/:serviceId',
+  '/:orgId/:serviceId',
   verifyJwtMiddlewares.verifyJwt,
   serviceController.getServiceById
 )
 
-// get assigned users for the service
+// GET /users/:orgId/:svcId
 routes.get(
-  'service/users/:orgId/:svcId',
+  '/users/:orgId/:svcId',
   verifyJwtMiddlewares.verifyJwt,
   serviceController.getAssignedUserForService
 )
+
+//  TODO: REMOVE ASSIGNED USERS FOR SERVICE 
+
 
 export default routes

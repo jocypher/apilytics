@@ -4,59 +4,59 @@ import organizationController from '../../controllers/OrganizationController'
 
 const routes = express.Router()
 
-// creating organizationn
+// POST /create-org
 routes.post(
   '/create-org',
   verifyJwtMiddlewares.verifyJwt,
   organizationController.createOrganization
 )
 
-// getting all organization
+// /GET /all organizations
 routes.get(
   '/all',
   verifyJwtMiddlewares.verifyJwt,
   organizationController.getAllOrganization
 )
 
-// updating the organization information
+// PUT /:id 
 routes.put(
   '/:id',
   verifyJwtMiddlewares.verifyJwt,
   organizationController.updateOrganization
 )
 
-// delete organization
+// DELET /:id
 routes.delete(
-  '/delete/:id',
+  '/:id',
   verifyJwtMiddlewares.verifyJwt,
   organizationController.deleteOrganization
 )
 
-// get members in an organization
+// GET /members/:id
 routes.get(
   '/members/:id',
   verifyJwtMiddlewares.verifyJwt,
   organizationController.getMembersInOrganization
 )
 
-// get organization by id
+// GET /:id
 routes.get(
   '/:id',
   verifyJwtMiddlewares.verifyJwt,
   organizationController.getOrganizationById
 )
 
-// sending user invite
+// POST /send-invite
 routes.post(
   '/send-invite',
   verifyJwtMiddlewares.verifyJwt,
   organizationController.sendInvitation
 )
 
-// accepting user invite
+// POST /accept-invite
 routes.post('/accept-invite', organizationController.acceptOrganizationInvite)
 
-// updating user role
+// PUT /update-role/:targetUserId/:orgId
 routes.post(
   '/update-role/:targetUserId/:orgId',
   verifyJwtMiddlewares.verifyJwt,

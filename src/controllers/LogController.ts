@@ -8,10 +8,9 @@ const userRepo = AppDataSource.getRepository(User)
 const orgUserRepo = AppDataSource.getRepository(OrganizationUser)
 const orgServiceRepo = AppDataSource.getRepository(SubComponent)
 const logRepo = AppDataSource.getRepository(Log)
-// in the logs controller, we will display the logs 
-// within the service so the question is how should the logs be like 
-// I know the frontend is expected to do that but the question is how should it be displayed .
-// Now let us think and figure out how it will be 
+
+// This controller will handle both the manual logs and the automated logs
+
 const createManualLogs = async(req:any,res:any)=>{
 const userId = req.id
 const {orgId,serviceId} = req.params
@@ -68,7 +67,7 @@ if(!logMessage || !logStatus || !logTag){
 }
 
 
-// POST /org/:orgId/service/:serviceId/logs/manual
+// get all manual logs
 
 const getAllManualLogs = async(req:any,res:any)=>{
   const userId = req.id
@@ -114,3 +113,12 @@ const getAllManualLogs = async(req:any,res:any)=>{
       return res.status(500).json({message: err.message})
   }
 }
+
+// pagination, skip, limit
+
+const getAutomatedLogs = async(req:any, res:any)=>{
+
+}
+
+export default {createManualLogs, getAllManualLogs, getAutomatedLogs}
+
