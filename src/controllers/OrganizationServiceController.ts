@@ -8,7 +8,7 @@ import { User } from '../models/user-model.entity'
 const orgUserRepo = AppDataSource.getRepository(OrganizationUser)
 const serviceRepo = AppDataSource.getRepository(SubComponent)
 const serviceUserRepo = AppDataSource.getRepository(SubComponentUser)
-
+//TODO: resolve conflicts
 // We need to work on the controller of the sub component
 const createService = async (req: any, res: any) => {
   const userId = req.id
