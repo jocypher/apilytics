@@ -9,11 +9,16 @@ import service from './routes/subcomponent/organization-service.routes'
 import logs from './routes/logs/logs.routes'
 import reqLogger from "./middlewares/reqlogger.middleware"
 import errorLogger from "./middlewares/errorlog.middleware"
+import errorHandler from "./middlewares/errorhandler.middlewares"
 const app = express()
+
 const PORT = process.env.PORT || 4000
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
+
+app.use(errorHandler)
 app.use(reqLogger)
+
 AppDataSource.initialize()
   .then(() => {
     console.log('Database has been initialized')
