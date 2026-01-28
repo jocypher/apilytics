@@ -207,12 +207,13 @@ const resetPassword = async (req: any, res: any) => {
   }
 }
 
-const updateUser = async (req: any, res: any) => {
+const updateUser = async (req: any, res: any,next:any) => {
   const { email, password, username } = req.body
   const userId = req.id
 
   if (!userId) return res.status(400).json({ message: 'user id not found' })
 
+    
   try {
     let user: User | null = await userRepo.findOne({
       where: {
@@ -230,11 +231,12 @@ const updateUser = async (req: any, res: any) => {
     return res.status(200).json({ message: 'update made successfully' })
   } catch (err: any) {
     console.error(err)
+    next(err)
     return res.status(500).json({ message: err.message })
   }
 }
 
-const handleLogout = async (req: any, res: any) => {
+const handleLogout = async (req: any, res: any,next:any) => {
   const userId = req.id
   try {
     const foundUser = await userRepo.findOne({
@@ -252,12 +254,13 @@ const handleLogout = async (req: any, res: any) => {
     return res.status(200).json({ message: 'Logout Successful' })
   } catch (err: any) {
     console.log(err)
+    next(err)
     res.status(500).json({ message: err.message })
   }
 }
 
 
-const getCurrentUser = async(req: any, res:any) =>{
+const getCurrentUser = async(req: any, res:any,next:any) =>{
   const userId = req.id
   try{
 
@@ -270,6 +273,7 @@ const getCurrentUser = async(req: any, res:any) =>{
     
       return res.status(200).json(user)
   }catch(err:any){
+    next(err)
     return res.status(500).json({message: err.message|| "Internal Server Error"})
   }
 }

@@ -8,9 +8,9 @@ import { User } from '../models/user-model.entity'
 const orgUserRepo = AppDataSource.getRepository(OrganizationUser)
 const serviceRepo = AppDataSource.getRepository(SubComponent)
 const serviceUserRepo = AppDataSource.getRepository(SubComponentUser)
-//TODO: resolve conflicts
-// We need to work on the controller of the sub component
-const createService = async (req: any, res: any) => {
+
+// service controller
+const createService = async (req: any, res: any,next:any) => {
   const userId = req.id
   const { orgId } = req.params
   const { name } = req.body
@@ -40,21 +40,21 @@ const createService = async (req: any, res: any) => {
     return res.status(201).json({ message: savedService })
   } catch (err: any) {
     console.error(err)
+    next(err)
     return res.status(500).json({ message: err.message })
   }
 }
 
-// assign user to service
-const assignUserToService = async (req: any, res: any) => {
+const assignUserToService = async (req: any, res: any,next:any) => {
   const userId = req.id
   const { orgId, serviceId, roleToChangeId } = req.params
- // confirm field parameters 
+
   if (!orgId || !serviceId || !roleToChangeId) {
     return res.status(400).json({ message: 'Missing required parameters' })
   }
 
   try {
-    // check user existence in the org
+
     const requesterMembership = await orgUserRepo.findOne({
       where: {
         organization: { id: orgId },
@@ -70,7 +70,7 @@ const assignUserToService = async (req: any, res: any) => {
       return res.status(401).json({ message: 'User is unauthorized' })
     }
 
-    // the target member we want to assign the service 
+
     const targetMembership = await orgUserRepo.findOne({
       where: {
         organization: { id: orgId },
@@ -120,12 +120,13 @@ const assignUserToService = async (req: any, res: any) => {
     return res.status(201).json({ message: result })
   } catch (err: any) {
     console.error(err)
+    next(err)
     return res.status(500).json({ message: `Server error ${err}` })
   }
 }
 
 // delete the service
-const deleteService = async (req: any, res: any) => {
+const deleteService = async (req: any, res: any,next:any) => {
   const userId = req.id
   const { orgId, svcId } = req.params
   if (!orgId)
@@ -162,12 +163,13 @@ const deleteService = async (req: any, res: any) => {
     return res.status(200).json({ message: 'Service deleted successfully' })
   } catch (err) {
     console.error(err)
+    next(err)
     return res.status(500).json({ message: `Server error: ${err}` })
   }
 }
 
 // get service by id
-const getServiceById = async (req: any, res: any) => {
+const getServiceById = async (req: any, res: any,next:any) => {
   const requesterId = req.id
   const { svcId, orgId } = req.params
 
@@ -200,13 +202,14 @@ const getServiceById = async (req: any, res: any) => {
     return res.status(200).json({ message: foundService })
   } catch (err: any) {
     console.error(err)
+    next(err)
     return res.status(500).json({ message: err.message })
   }
 }
 
 // get the assigned users for this service
 // include pagination and limit
-const getAssignedUserForService = async (req: any, res: any) => {
+const getAssignedUserForService = async (req: any, res: any,next:any) => {
   const userId = req.id
   const { orgId, svcId } = req.params
   const page = Number(req.query.page) || 1
@@ -243,7 +246,7 @@ const getAssignedUserForService = async (req: any, res: any) => {
     if (!organizationService.isOrgAdminOrOwner(orgMember)) {
       return res.status(403).json({ message: 'Forbidden' })
     }
-    // since. we have now confirmed we that the user is in the eorganization and also an admin
+
     const [assignments, total] = await serviceUserRepo.findAndCount({
       where: {
         sub_component: { id: svcId },
@@ -263,6 +266,7 @@ const getAssignedUserForService = async (req: any, res: any) => {
     })
   } catch (err) {
     console.log(err)
+    next(err)
     return res.status(500).json({ message: 'Server error' })
   }
 }

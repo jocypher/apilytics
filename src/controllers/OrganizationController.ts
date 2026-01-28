@@ -1,10 +1,4 @@
-// Kwame has created an account and he is now eligible to create an organization
-// questions to keep in mind
-// what request is the user making,
-// is he already signed in
-// what happens after he makes the request
-// 1. he should be assigned an admin automatically to that organization
-// 2. his invitation status should be accept
+
 
 import AppDataSource from '../configs/app-datasource.config'
 import { Organization } from '../models/organization-model.entity'
@@ -13,15 +7,15 @@ import { OrganizationUser } from '../models/organization-user.entity'
 import organizationService from '../services/organization.service'
 import client from '../configs/redis.configs'
 import bcrypt from 'bcryptjs'
+import { nextDay } from 'date-fns'
 
 const userRepo = AppDataSource.getRepository(User)
 const orgRepo = AppDataSource.getRepository(Organization)
 const orgUserRepo = AppDataSource.getRepository(OrganizationUser)
 
 // creating organization
-const createOrganization = async (req: any, res: any) => {
-  // to create an organization , we first need to
-  // get what details will be needed from the creator
+const createOrganization = async (req: any, res: any, next:any) => {
+
   const { org_name } = req.body
   const id = req.id
   try {
@@ -67,12 +61,13 @@ const createOrganization = async (req: any, res: any) => {
       .status(201)
       .json({ message: 'organization created', org: orgResult })
   } catch (err) {
+    next(err)
     return res.status(500).json({ message: err })
   }
 }
 
 // get all organizations created by user
-const getAllOrganization = async (req: any, res: any) => {
+const getAllOrganization = async (req: any, res: any,next:any) => {
   const id = req.id
   try {
     const user = await userRepo.findOne({
@@ -91,12 +86,13 @@ const getAllOrganization = async (req: any, res: any) => {
     return res.status(200).json(orgs)
   } catch (err: any) {
     console.error(err)
+    next(err)
     return res.status(500).json({ message: err })
   }
 }
 
 // delete organization
-const deleteOrganization = async (req: any, res: any) => {
+const deleteOrganization = async (req: any, res: any,next:any) => {
   const id = req.id
   const orgId = req.params.id
   try {
@@ -126,12 +122,13 @@ const deleteOrganization = async (req: any, res: any) => {
       .status(200)
       .json({ message: `organization with id ${orgId} deleted successfully` })
   } catch (err) {
+    next(err)
     console.error('The errors involved in the system are', err)
   }
 }
 
 // update organization name
-const updateOrganization = async (req: any, res: any) => {
+const updateOrganization = async (req: any, res: any,next:any) => {
   const orgId = req.params.id
   const { name } = req.body
   const id = req.id
@@ -167,12 +164,13 @@ const updateOrganization = async (req: any, res: any) => {
     return res.status(200).json({ message: 'update successful', org: org })
   } catch (err) {
     console.log(err)
+    next(err)
     return res.status(500).json({ message: `The error is ${err}` })
   }
 }
 
 // get organization by id
-const getOrganizationById = async (req: any, res: any) => {
+const getOrganizationById = async (req: any, res: any,next:any) => {
   const orgId = req.params.id
   const userId = req.id
   // to get organization by id ,
@@ -206,26 +204,14 @@ const getOrganizationById = async (req: any, res: any) => {
     return res.status(200).json({ organization: organization })
   } catch (err) {
     console.error(`The error involved is ${err}`)
+    next(err)
     return res.status(500).json({ message: `Server error is ${err}` })
   }
 }
 
 // send invitation to user
-const sendInvitation = async (req: any, res: any) => {
-  // to invite users , we need the link to the org,
-  // get the user we want to send to then we send right
-  //get the email of the user we want to send the invite to .
-  // const {email, organizationName} = req.body
+const sendInvitation = async (req: any, res: any,next:any) => {
 
-  // if(!email||!organizationName) return res.status(401).json({message:"email field required "})
-
-  // const response = organizationService.sendInvite(
-  //     email,
-  //     "",
-  //     organizationName
-  // )
-
-  // return res.status(200).json({message:"Invite sent successfully"})
 
   const { email } = req.body
   const userId = req.id
@@ -253,12 +239,7 @@ const sendInvitation = async (req: any, res: any) => {
         .status(400)
         .json({ message: "you don't have access to send invitation link" })
 
-    //     // get the user organization
-    // const organization = await orgUserRepo.findOne({
-    //     where:{
-    //         organization:user.organization
-    //     }
-    // })
+
 
     const rawToken = organizationService.generateInviteToken()
     const hashedToken = await organizationService.hashInviteToken(rawToken)
@@ -266,7 +247,7 @@ const sendInvitation = async (req: any, res: any) => {
     // frontend invite link
     const inviteLink = `${process.env.FRONTEND_URL}/accept-invite?token=${rawToken}&orgId=${organization.id}`
 
-    // store invite in redis (24 hours)
+    // store invite in redis 
     await client.set(
       `org_invite:${hashedToken}`,
       JSON.stringify({
@@ -288,11 +269,12 @@ const sendInvitation = async (req: any, res: any) => {
       .json({ message: 'Invite sent successfully', data: response })
   } catch (err: any) {
     console.log(err)
+    next(err)
     return res.status(500).json({ error: err.message })
   }
 }
 
-const getMembersInOrganization = async (req: any, res: any) => {
+const getMembersInOrganization = async (req: any, res: any,next:any) => {
   const userId = req.id
   const orgId = req.params.id
 
@@ -325,12 +307,13 @@ const getMembersInOrganization = async (req: any, res: any) => {
     console.log(members)
     return res.status(200).json(members)
   } catch (err: any) {
+    next(err)
     return res.status(500).json({ message: err.message })
   }
 }
 
 // accept organization invite
-const acceptOrganizationInvite = async (req: any, res: any) => {
+const acceptOrganizationInvite = async (req: any, res: any, next:any) => {
   const { token, orgId } = req.params
   const userId = req.id
 
@@ -401,12 +384,13 @@ const acceptOrganizationInvite = async (req: any, res: any) => {
 
     await orgUserRepo.save(orgUser)
   } catch (err: any) {
+    next(err)
     return res.status(500).json({ message: err.message })
   }
 }
 
 // update the user role for the organization
-const updateUserRole = async (req: any, res: any) => {
+const updateUserRole = async (req: any, res: any,next:any) => {
   const { targetUserId, orgId } = req.params
   const reqUserId = req.id
 
@@ -436,6 +420,7 @@ const updateUserRole = async (req: any, res: any) => {
     return res.status(200).json({ message: 'updated role successfully' })
   } catch (err: any) {
     console.error(err)
+    next(err)
     return res.status(500).json({ message: `Server error ${err}` })
   }
 }
