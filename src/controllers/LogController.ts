@@ -1,146 +1,142 @@
-import {User} from "../models/user-model.entity"
-import AppDataSource from "../configs/app-datasource.config"
-import { SubComponent } from "../models/organization-service.entity"
-import {Log} from "../models/log-item.entity"
-import organizationService from "../services/organization.service"
-import { OrganizationUser } from "../models/organization-user.entity"
-import { LogTag } from "../models/log-tag.entity"
+import { User } from '../models/user-model.entity'
+import AppDataSource from '../configs/app-datasource.config'
+import { SubComponent } from '../models/organization-service.entity'
+import { Log } from '../models/log-item.entity'
+import organizationService from '../services/organization.service'
+import { OrganizationUser } from '../models/organization-user.entity'
+import { LogTag } from '../models/log-tag.entity'
+import errorHandler from '../middlewares/errorhandler.middlewares'
+
 const userRepo = AppDataSource.getRepository(User)
 const orgUserRepo = AppDataSource.getRepository(OrganizationUser)
 const orgServiceRepo = AppDataSource.getRepository(SubComponent)
 const logRepo = AppDataSource.getRepository(Log)
 const logTagRepo = AppDataSource.getRepository(LogTag)
+
 // This controller will handle both the manual logs and the automated logs
- 
-const createManualLogs = async(req:any,res:any)=>{
-const userId = req.id
-const {orgId,serviceId} = req.params
-const {logMessage, logStatus, logTagId} = req.body
-if(!logMessage || !logStatus || !logTagId){
-    return res.status(400).json({message: "Required field parameters"})
-}
- try{
-  const tag = await logTagRepo.findOne({
-    where:{
-      id: logTagId
-    }
-  })
-  
-if (!tag) {
-  return res.status(400).json({ message: "Invalid log tag" });
-}
-   const orgUser = await orgUserRepo.findOne({
-    where:{
-      organization: {id: orgId},
-      user: {id: userId},
-      
-    },
-     relations: ["user", "organization"]
-   })
-   if(!orgUser){
-    return res.status(404).json({message:"User Not found"})
-   }
+const createManualLogs = async (req: any, res: any) => {
+  const userId = req.id
+  const { orgId, serviceId } = req.params
+  const { logMessage, logStatus, logTagId } = req.body
 
-    if(!organizationService.isOrgAdminOrOwner(orgUser)){
-      return res.status(401).json({message:"Forbidden"})
+  if (!logMessage || !logStatus || !logTagId) {
+    return res.status(400).json({ message: 'Required field parameters' })
+  }
+  try {
+    const tag = await logTagRepo.findOne({
+      where: {
+        id: logTagId,
+      },
+    })
+
+    if (!tag) {
+      return res.status(400).json({ message: 'Invalid log tag' })
+    }
+    const orgUser = await orgUserRepo.findOne({
+      where: {
+        organization: { id: orgId },
+        user: { id: userId },
+      },
+      relations: ['user', 'organization'],
+    })
+    if (!orgUser) {
+      return res.status(404).json({ message: 'User Not found' })
     }
 
-if(!logMessage || !logStatus || !logTagId){
-    return res.status(400).json({message: "Required field parameters"})
-}
-
-   const user = await userRepo.findOne({
-    wher:{
-      id: userId
+    if (!organizationService.isOrgAdminOrOwner(orgUser)) {
+      return res.status(401).json({ message: 'Forbidden' })
     }
-   })
-   if(!user){
-    return res.status(404).json({message:"User Not found"})
-   }
 
-   const orgService = orgServiceRepo.findOne({
-    where:{
-      id: serviceId,
-      organization: {id: orgId}
+    const user = await userRepo.findOne({
+      where: {
+        id: userId,
+      },
+    })
+    if (!user) {
+      return res.status(404).json({ message: 'User Not found' })
     }
-   })
 
-   if(!orgService) return res.status(401).json({message: "The organization with the service isn't available"})
+    const orgService =await orgServiceRepo.findOne({
+      where: {
+        id: serviceId,
+        organization: { id: orgId },
+      },
+      relations: ['organization'],
+    })
+
+    if (!orgService)
+      return res
+        .status(401)
+        .json({ message: "The organization with the service isn't available" })
 
     // TODO: change tags: logTagId to logTag: tag
     const createManualLogs = logRepo.create({
       message: logMessage,
       logLevel: logStatus,
-      tags: logTagId,
+      tags: [],
       created_by: orgUser.user,
       sub_component: orgService,
-
     })
 
-      await logRepo.save(createManualLogs)
+    await logRepo.save(createManualLogs)
 
-    return res.status(200).json({message: `Logs created `})
-   
-
- }catch(err:any){
+    return res.status(200).json({ message: `Logs created ` })
+  } catch (err: any) {
     console.log(err)
-    return res.status(500).json({message:`Internal Server error ${err.message}`})
- }
+  }
 }
 
-
-
-
 // get all manual logs
-const getAllManualLogs = async(req:any,res:any)=>{
+const getAllManualLogs = async (req: any, res: any) => {
   const userId = req.id
-  const {orgId, serviceId} = req.params
+  const { orgId, serviceId } = req.params
 
-  try{
+  try {
     const orgUser = await orgUserRepo.findOne({
-      where:{
-        user: {id: userId},
-        organization:{id: orgId}
+      where: {
+        user: { id: userId },
+        organization: { id: orgId },
       },
-      relations: ["user", "organization"]
+      relations: ['user', 'organization'],
     })
 
-    if(!orgUser) return res.status(404).json({message: `Not a member of the organization`})
-    
-      // check the assigned User
-      const assignedUser = await orgServiceRepo.findOne({
-        where:{
-          id: serviceId,
-          users:{user: orgUser.user}, 
-          
-        },
-        relations: ["user"]
-      })
-      if(!assignedUser) return res.status(401).json({message: "User not assigned to this service"})
-      
-      let logs = await logRepo.find({
-        where:{
-          sub_component: {id: serviceId}
-        }
-      })
+    if (!orgUser)
+      return res
+        .status(404)
+        .json({ message: `Not a member of the organization` })
 
-      if(logs.length == 0 ){
-        return res.status(200).json({message: "No manual logs created"})
-      }
+    // check the assigned User
+    const assignedUser = await orgServiceRepo.findOne({
+      where: {
+        id: serviceId,
+        users: { user: orgUser.user },
+      },
+      relations: ['user'],
+    })
+    if (!assignedUser)
+      return res
+        .status(401)
+        .json({ message: 'User not assigned to this service' })
 
-      return res.status(200).json({message: logs})
-      
+    let logs = await logRepo.find({
+      where: {
+        sub_component: { id: serviceId },
+      },
+    })
 
-  }catch(err:any){
-      console.log(err)
-      return res.status(500).json({message: err.message})
+    if (logs.length == 0) {
+      return res.status(200).json({ message: 'No manual logs created' })
+    }
+
+    return res.status(200).json({ message: logs })
+  } catch (err: any) {
+    console.log(err)
+    return res.status(500).json({ message: err.message })
   }
 }
 
 // pagination, skip, limit
 
-const getAutomatedLogs = async(req:any, res:any)=>{
+const getAutomatedLogs = async (req: any, res: any) => {}
 
-}
-
-export default {createManualLogs, getAllManualLogs, getAutomatedLogs}
+export default { createManualLogs, getAllManualLogs, getAutomatedLogs }
