@@ -137,6 +137,13 @@ const getAllManualLogs = async (req: any, res: any) => {
 
 // pagination, skip, limit
 
-const getAutomatedLogs = async (req: any, res: any) => {}
+const getAutomatedLogs = async (req: any, res: any) => {
+  const page = Number(req.query.page) || 1
+  const limit = Number(req.query.limit) || 10
+  const skip = (page - 1) * limit
+  const {apiKey} = req.body
+
+  
+}
 
 export default { createManualLogs, getAllManualLogs, getAutomatedLogs }
