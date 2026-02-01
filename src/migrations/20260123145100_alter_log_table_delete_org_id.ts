@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import type{ MigrationInterface, QueryRunner } from "typeorm";
 
 export class AlterLogTableDeleteOrgId2026012345100 implements MigrationInterface{
   

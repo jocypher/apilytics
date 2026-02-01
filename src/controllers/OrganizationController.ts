@@ -7,7 +7,7 @@ import { OrganizationUser } from '../models/organization-user.entity'
 import organizationService from '../services/organization.service'
 import client from '../configs/redis.configs'
 import bcrypt from 'bcryptjs'
-import { nextDay } from 'date-fns'
+import { validate as isUUID } from 'uuid'
 
 const userRepo = AppDataSource.getRepository(User)
 const orgRepo = AppDataSource.getRepository(Organization)
@@ -216,7 +216,7 @@ const sendInvitation = async (req: any, res: any,next:any) => {
   const { email } = req.body
   const userId = req.id
 
-  if (!userId) return res.status(401).json({ message: 'user not found' })
+  if (!email) return res.status(401).json({ message: 'field required' })
   try {
     const organization = await orgRepo.findOne({
       where: {
@@ -276,14 +276,14 @@ const sendInvitation = async (req: any, res: any,next:any) => {
 
 const getMembersInOrganization = async (req: any, res: any,next:any) => {
   const userId = req.id
-  const orgId = req.params.id
+  const {orgId} = req.params
 
-  if (!userId || !orgId) {
-    return res.status(401).json({ message: 'Unauthorized' })
-  }
+    if (!orgId || !isUUID(orgId)) {
+      return res.status(400).json({ message: 'Invalid organization ID' })
+    }
 
   try {
-    const orgMember = orgUserRepo.find({
+    const orgMember = await orgUserRepo.find({
       where: {
         user: { id: userId },
         organization: { id: orgId },

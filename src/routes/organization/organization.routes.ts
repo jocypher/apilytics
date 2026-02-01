@@ -32,13 +32,6 @@ routes.delete(
   organizationController.deleteOrganization
 )
 
-// GET /members/:id
-routes.get(
-  '/members/:id',
-  verifyJwtMiddlewares.verifyJwt,
-  organizationController.getMembersInOrganization
-)
-
 // GET /:id
 routes.get(
   '/:id',
@@ -48,9 +41,16 @@ routes.get(
 
 // POST /send-invite
 routes.post(
-  '/send-invite',
+  '/sendInvite',
   verifyJwtMiddlewares.verifyJwt,
   organizationController.sendInvitation
+)
+
+// GET /members/:id
+routes.get(
+  '/members/:orgId',
+  verifyJwtMiddlewares.verifyJwt,
+  organizationController.getMembersInOrganization
 )
 
 // POST /accept-invite

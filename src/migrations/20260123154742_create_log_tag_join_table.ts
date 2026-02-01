@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm"
+import type { MigrationInterface, QueryRunner } from "typeorm"
 
 export class CreateLogTagJoinTable20260123154742 implements MigrationInterface {
 

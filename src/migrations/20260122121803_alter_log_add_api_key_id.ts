@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import type{ MigrationInterface, QueryRunner } from "typeorm";
 
 export class AlterLogAddApiKey20260122121803 implements MigrationInterface{
     // name?: string | undefined;

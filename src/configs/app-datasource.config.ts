@@ -1,4 +1,13 @@
 import { DataSource } from 'typeorm'
+import { User } from '../models/user-model.entity'
+import { Log } from '../models/log-item.entity'
+import { LogTag } from '../models/log-tag.entity'
+import { Organization } from '../models/organization-model.entity'
+import { OrganizationUser } from '../models/organization-user.entity'
+import organizationService from '../services/organization.service'
+import { ApiKey } from '../models/api-key.entity'
+import { SubComponent } from '../models/organization-service.entity'
+import { SubComponentUser } from '../models/org-service-user.entity'
 
 const isProduction = process.env.NODE_ENV == 'production'
 
@@ -22,7 +31,16 @@ const appDataSource = new DataSource({
     : false,
   migrations: ['src/migrations/*.{js,ts}'],
   logging: false,
-  entities: [__dirname + '/../models/**/.entity.{js,ts}'],
+  entities: [
+    User,
+    Log,
+    LogTag,
+    Organization,
+    OrganizationUser,
+    ApiKey,
+    SubComponent,
+    SubComponentUser
+  ],
 })
 
 export default appDataSource

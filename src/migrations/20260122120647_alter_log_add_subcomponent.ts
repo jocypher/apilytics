@@ -1,6 +1,6 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import type { MigrationInterface, QueryRunner } from "typeorm";
 
-export class AlterLogTableAddSubComponentId implements MigrationInterface{
+export class AlterLogTableAddSubComponentId20260122120647 implements MigrationInterface{
     name?: string | undefined;
     transaction?: boolean | undefined;
    public async up(queryRunner: QueryRunner): Promise<any> {

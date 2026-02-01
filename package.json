@@ -13,9 +13,9 @@
     "test": "echo \"No tests yet\"",
     "dev": "nodemon dist/server.js",
     "typeorm": "typeorm-ts-node-commonjs",
-    "migration:generate": "npm run typeorm -- migration:generate -d src/configs/appdatasource.config",
-    "migration:run": "npm run typeorm -- migration:run -d src/configs/appdatasource.config",
-    "migration:revert": "npm run typeorm -- migration:revert -d src/configs/appdatasource.config",
+    "migration:generate": "npm run typeorm -- migration:generate -d src/configs/app-datasource.config",
+    "migration:run": "npm run typeorm -- migration:run -d src/configs/app-datasource.config",
+    "migration:revert": "npm run typeorm -- migration:revert -d src/configs/app-datasource.config",
     "lint": "eslint .",
     "prepare": "husky"
   },

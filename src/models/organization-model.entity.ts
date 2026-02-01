@@ -15,7 +15,7 @@ import { OrganizationUser } from './organization-user.entity'
 @Entity()
 export class Organization {
   @PrimaryGeneratedColumn('uuid')
-  id: number
+  id: string
 
   @Column()
   organization_name: string

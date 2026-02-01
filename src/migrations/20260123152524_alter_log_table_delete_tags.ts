@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import type{ MigrationInterface, QueryRunner } from "typeorm";
 
 
 export class AlterLogDeleteTags20260123152524 implements MigrationInterface{
@@ -7,14 +7,14 @@ export class AlterLogDeleteTags20260123152524 implements MigrationInterface{
 
   public async up(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(
-            `ALTER TABLE "logs" 
+            `ALTER TABLE "log" 
              DROP COLUMN IF EXISTS "tags"
             `
         )
     }
   public async down(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(
-            `ALTER TABLE "logs"
+            `ALTER TABLE "log"
              ADD COLUMN "tags" text[] DEFAULT ARRAY::text[]
             `
         )
