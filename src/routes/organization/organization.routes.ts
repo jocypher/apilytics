@@ -11,11 +11,28 @@ routes.post(
   organizationController.createOrganization
 )
 
+// POST /accept-invite
+routes.post('/accept-invite', organizationController.acceptOrganizationInvite)
+
+// PUT /update-role/:targetUserId/:orgId
+routes.put(
+  '/update-role/:targetUserId/:orgId',
+  verifyJwtMiddlewares.verifyJwt,
+  organizationController.updateUserRole
+)
+
+
 // /GET /all organizations
 routes.get(
   '/all',
   verifyJwtMiddlewares.verifyJwt,
   organizationController.getAllOrganization
+)
+// POST /send-invite
+routes.post(
+  '/:orgId/sendInvite',
+  verifyJwtMiddlewares.verifyJwt,
+  organizationController.sendInvitation
 )
 
 // PUT /:id 
@@ -39,12 +56,7 @@ routes.get(
   organizationController.getOrganizationById
 )
 
-// POST /send-invite
-routes.post(
-  '/sendInvite',
-  verifyJwtMiddlewares.verifyJwt,
-  organizationController.sendInvitation
-)
+
 
 // GET /members/:id
 routes.get(
@@ -53,14 +65,6 @@ routes.get(
   organizationController.getMembersInOrganization
 )
 
-// POST /accept-invite
-routes.post('/accept-invite', organizationController.acceptOrganizationInvite)
 
-// PUT /update-role/:targetUserId/:orgId
-routes.post(
-  '/update-role/:targetUserId/:orgId',
-  verifyJwtMiddlewares.verifyJwt,
-  organizationController.updateUserRole
-)
 
 export default routes

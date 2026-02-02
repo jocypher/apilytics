@@ -22,7 +22,7 @@ const sendInvite = async (
                 Email: email,
               },
             ],
-            Subject: 'Your Password Reset Request',
+            Subject: 'ORGANIZATION INVITE',
             TextPart: `Hello,\n\nInvite has been sent for you to join this Org ${organization}.\n\nTo complete the process, please click the link below to accept the invitation:\n\n${message}.\nThis link is active for a limited time 1 hour and can only be used once.\n\nThank you,
             \nThe Apilytics Team`,
           },

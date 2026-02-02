@@ -30,8 +30,6 @@ export class Organization {
   @OneToMany(() => SubComponent, (components) => components.organization)
   sub_components: SubComponent[]
 
-  @OneToMany(() => ApiKey, (apiKey) => apiKey.organization)
-  api_keys: ApiKey[]
 
   @OneToMany(() => OrganizationUser, (orgUser) => orgUser.organization)
   members: OrganizationUser[]

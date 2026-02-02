@@ -214,19 +214,20 @@ const sendInvitation = async (req: any, res: any,next:any) => {
 
 
   const { email } = req.body
+  const {orgId} = req.params
   const userId = req.id
 
   if (!email) return res.status(401).json({ message: 'field required' })
   try {
     const organization = await orgRepo.findOne({
       where: {
-        created_by_id: userId,
+        id: orgId,
       },
     })
     if (!organization)
       return res.status(404).json({ message: 'organization not found' })
 
-    const orgUser = await orgUserRepo.findOne({
+    const requester = await orgUserRepo.findOne({
       where: {
         user: { id: userId },
         organization: { id: organization.id },
@@ -234,7 +235,7 @@ const sendInvitation = async (req: any, res: any,next:any) => {
       relations: ['user', 'organization'],
     })
 
-    if (!organizationService.isOrgAdminOrOwner(orgUser))
+    if (!organizationService.isOrgAdminOrOwner(requester))
       return res
         .status(400)
         .json({ message: "you don't have access to send invitation link" })
@@ -258,7 +259,7 @@ const sendInvitation = async (req: any, res: any,next:any) => {
       { EX: 60 * 60 * 24 }
     )
 
-    const response = organizationService.sendInvite(
+    await organizationService.sendInvite(
       email,
       inviteLink.toString(),
       organization.organization_name
@@ -266,7 +267,7 @@ const sendInvitation = async (req: any, res: any,next:any) => {
 
     return res
       .status(200)
-      .json({ message: 'Invite sent successfully', data: response })
+      .json({ message: 'Invite sent successfully' })
   } catch (err: any) {
     console.log(err)
     next(err)

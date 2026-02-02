@@ -12,6 +12,7 @@ import { User } from './user-model.entity'
 
 import { SubComponentUser } from './org-service-user.entity'
 import { Log } from './log-item.entity'
+import { ApiKey } from './api-key.entity'
 
 @Entity()
 export class SubComponent {
@@ -23,7 +24,7 @@ export class SubComponent {
 
   @ManyToOne(
     () => Organization,
-    (organization) => organization.organization_name
+    (organization) => organization.id
   )
   @JoinColumn({ name: 'organization_id' })
   organization: Organization
@@ -40,4 +41,7 @@ export class SubComponent {
 
   @OneToMany(() => Log, (log) => log.id)
   log: Log[]
+
+  @OneToMany(() => ApiKey, (apiKey) => apiKey.subcomponent)
+  api_keys: ApiKey[]
 }

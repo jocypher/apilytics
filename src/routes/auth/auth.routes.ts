@@ -31,4 +31,7 @@ routes.post("/logout", authController.handleLogout)
 // GET /me
 routes.get("/me", verifyJwtMiddlewares.verifyJwt, authController.getCurrentUser)
 
+// DELETE /user
+routes.delete("/:id", verifyJwtMiddlewares.verifyJwt, authController.deleteAccount)
+
 export default routes

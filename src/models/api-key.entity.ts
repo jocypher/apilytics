@@ -11,6 +11,7 @@ import {
 import { Organization } from './organization-model.entity'
 import { User } from './user-model.entity'
 import { Log } from './log-item.entity'
+import { SubComponent } from './organization-service.entity'
 
 @Entity()
 export class ApiKey {
@@ -26,9 +27,9 @@ export class ApiKey {
   @Column({ nullable: true })
   name: string
 
-  @ManyToOne(() => Organization, (org) => org.api_keys)
+  @ManyToOne(() => SubComponent, (subc) => subc.api_keys)
   @JoinColumn({ name: 'organization_id' })
-  organization: Organization
+  subcomponent: SubComponent
 
   @ManyToOne(() => User, (user) => user.id)
   @JoinColumn({ name: 'created_by_id' })

@@ -207,13 +207,12 @@ const resetPassword = async (req: any, res: any) => {
   }
 }
 
-const updateUser = async (req: any, res: any,next:any) => {
+const updateUser = async (req: any, res: any, next: any) => {
   const { email, password, username } = req.body
   const userId = req.id
 
   if (!userId) return res.status(400).json({ message: 'user id not found' })
 
-    
   try {
     let user: User | null = await userRepo.findOne({
       where: {
@@ -236,7 +235,7 @@ const updateUser = async (req: any, res: any,next:any) => {
   }
 }
 
-const handleLogout = async (req: any, res: any,next:any) => {
+const handleLogout = async (req: any, res: any, next: any) => {
   const userId = req.id
   try {
     const foundUser = await userRepo.findOne({
@@ -259,22 +258,40 @@ const handleLogout = async (req: any, res: any,next:any) => {
   }
 }
 
-
-const getCurrentUser = async(req: any, res:any,next:any) =>{
+const getCurrentUser = async (req: any, res: any, next: any) => {
   const userId = req.id
-  try{
-
+  try {
     const user = await userRepo.findOne({
-      where:{
-        id: userId
-      }
+      where: {
+        id: userId,
+      },
     })
-    if(!user) return res.status(404).json({messae: "user not found"})
-    
-      return res.status(200).json(user)
-  }catch(err:any){
+    if (!user) return res.status(404).json({ messae: 'user not found' })
+
+    return res.status(200).json(user)
+  } catch (err: any) {
     next(err)
-    return res.status(500).json({message: err.message|| "Internal Server Error"})
+    return res
+      .status(500)
+      .json({ message: err.message || 'Internal Server Error' })
+  }
+}
+
+const deleteAccount = async (req: any, res: any, next: any) => {
+  const userId = req.id
+  try {
+    const user = await userRepo.findOne({ where: { id: userId } })
+    if (!user) return res.status(404).json({ message: 'User not found' })
+    let token = await client.get(`auth:${userId}`)
+    if (!token) return res.status(400).json({ message: 'Unauthorized' })
+
+    await client.del(`auth:${userId}`)
+    await userRepo.delete({
+      id: userId,
+    })
+  } catch (err) {
+    console.log(err)
+    next(err)
   }
 }
 export default {
@@ -285,6 +302,6 @@ export default {
   verifyOtp,
   updateUser,
   handleLogout,
-  getCurrentUser
-
+  getCurrentUser,
+  deleteAccount
 }
