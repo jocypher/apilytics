@@ -9,7 +9,6 @@ import {
 } from 'typeorm'
 import { User } from './user-model.entity'
 import { SubComponent } from './organization-service.entity'
-import { ApiKey } from './api-key.entity'
 import { OrganizationUser } from './organization-user.entity'
 
 @Entity()

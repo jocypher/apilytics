@@ -5,7 +5,8 @@ import { Log } from '../models/log-item.entity'
 import organizationService from '../services/organization.service'
 import { OrganizationUser } from '../models/organization-user.entity'
 import { LogTag } from '../models/log-tag.entity'
-import errorHandler from '../middlewares/errorhandler.middlewares'
+import sharedService from '../services/shared.service'
+
 
 const userRepo = AppDataSource.getRepository(User)
 const orgUserRepo = AppDataSource.getRepository(OrganizationUser)
@@ -43,7 +44,7 @@ const createManualLogs = async (req: any, res: any) => {
       return res.status(404).json({ message: 'User Not found' })
     }
 
-    if (!organizationService.isOrgAdminOrOwner(orgUser)) {
+    if (!sharedService.isOrgAdminOrOwner(orgUser)) {
       return res.status(401).json({ message: 'Forbidden' })
     }
 

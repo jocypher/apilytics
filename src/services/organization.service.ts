@@ -57,13 +57,10 @@ const hashInviteToken = async (token: string): Promise<string> => {
   return hashedToken
 }
 
-const isOrgAdminOrOwner = (membership: OrganizationUser | null): boolean => {
-  return !!membership && ['owner', 'admin'].includes(membership.role)
-}
+
 
 export default {
   sendInvite,
   generateInviteToken,
   hashInviteToken,
-  isOrgAdminOrOwner,
 }

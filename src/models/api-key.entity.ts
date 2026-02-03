@@ -8,7 +8,6 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm'
-import { Organization } from './organization-model.entity'
 import { User } from './user-model.entity'
 import { Log } from './log-item.entity'
 import { SubComponent } from './organization-service.entity'
@@ -28,7 +27,7 @@ export class ApiKey {
   name: string
 
   @ManyToOne(() => SubComponent, (subc) => subc.api_keys)
-  @JoinColumn({ name: 'organization_id' })
+  @JoinColumn({ name: 'sub_component_id' })
   subcomponent: SubComponent
 
   @ManyToOne(() => User, (user) => user.id)

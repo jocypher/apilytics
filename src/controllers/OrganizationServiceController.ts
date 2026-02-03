@@ -2,13 +2,16 @@ import AppDataSource from '../configs/app-datasource.config'
 import { OrganizationUser } from '../models/organization-user.entity'
 import { SubComponent } from '../models/organization-service.entity'
 import { SubComponentUser } from '../models/org-service-user.entity'
-import organizationService from '../services/organization.service'
+import sharedService from '../services/shared.service'
 import { User } from '../models/user-model.entity'
+import { ApiKey } from '../models/api-key.entity'
+
 
 const orgUserRepo = AppDataSource.getRepository(OrganizationUser)
 const serviceRepo = AppDataSource.getRepository(SubComponent)
 const serviceUserRepo = AppDataSource.getRepository(SubComponentUser)
-
+const userRepo = AppDataSource.getRepository(User)
+const apiKeyRepo = AppDataSource.getRepository(ApiKey)
 // service controller
 const createService = async (req: any, res: any,next:any) => {
   const userId = req.id
@@ -28,7 +31,7 @@ const createService = async (req: any, res: any,next:any) => {
     if (!orgMember) {
       return res.status(403).json({ message: 'Not a member' })
     }
-    if (!organizationService.isOrgAdminOrOwner(orgMember)) {
+    if (!sharedService.isOrgAdminOrOwner(orgMember)) {
       return res.status(401).json({ message: 'User is unauthorized' })
     }
     const newService = serviceRepo.create({
@@ -66,7 +69,7 @@ const assignUserToService = async (req: any, res: any,next:any) => {
       return res.status(403).json({ message: 'Not a member' })
     }
 
-    if (!organizationService.isOrgAdminOrOwner(requesterMembership)) {
+    if (!sharedService.isOrgAdminOrOwner(requesterMembership)) {
       return res.status(401).json({ message: 'User is unauthorized' })
     }
 
@@ -129,9 +132,6 @@ const assignUserToService = async (req: any, res: any,next:any) => {
 const deleteService = async (req: any, res: any,next:any) => {
   const userId = req.id
   const { orgId, svcId } = req.params
-  if (!orgId)
-    return res.status(404).json({ message: 'Missing required parameters' })
-
   try {
     const orgMember = await orgUserRepo.findOne({
       where: {
@@ -143,7 +143,7 @@ const deleteService = async (req: any, res: any,next:any) => {
     if (!orgMember) {
       return res.status(403).json({ message: 'Not a member' })
     }
-    if (!organizationService.isOrgAdminOrOwner(orgMember))
+    if (!sharedService.isOrgAdminOrOwner(orgMember))
       return res.status(401).json({ message: 'Unauthorized' })
 
     const foundService = await serviceRepo.findOne({
@@ -172,9 +172,6 @@ const deleteService = async (req: any, res: any,next:any) => {
 const getServiceById = async (req: any, res: any,next:any) => {
   const requesterId = req.id
   const { svcId, orgId } = req.params
-
-  if (!svcId || !orgId)
-    return res.status(404).json({ message: 'Missing field parameters' })
   try {
     const membership = await orgUserRepo.findOne({
       where: {
@@ -243,7 +240,7 @@ const getAssignedUserForService = async (req: any, res: any,next:any) => {
     if (!foundService) {
       return res.status(404).json({ message: 'Service not found' })
     }
-    if (!organizationService.isOrgAdminOrOwner(orgMember)) {
+    if (!sharedService.isOrgAdminOrOwner(orgMember)) {
       return res.status(403).json({ message: 'Forbidden' })
     }
 
@@ -271,10 +268,60 @@ const getAssignedUserForService = async (req: any, res: any,next:any) => {
   }
 }
 
+// brain teaser
+// 1. A company has created an org , created a service in the table , now what is left is how to get the logs
+// Now with the automated logs .
+// We need an api that connects to the appl , 
+// so they need to request for an api key
+// however we need to confirm their details 
+
+const generateApiKey = async(req:any, res:any, next:any)=>{
+  const userId = req.id
+  const {orgId , serviceId} = req.params
+
+  try{
+    const foundUser = await userRepo.findOne({
+      where:{
+        id: userId
+      }
+    })
+    if(!foundUser) return res.status(404).json({message:"user not found"})
+    const orgUser = await orgUserRepo.findOne({
+  where:{
+    organization:{id:orgId},
+    user:{id:userId}
+  },
+  relations:["user", "organization"]
+})
+if(!orgUser) return res.status(404).json({message:"User with org not found"})
+const service = await serviceRepo.findOne({
+  where:{
+    id:serviceId
+  }
+})
+if(!service) return res.status(404).json({message:"service not found"})
+  if(!sharedService.isOrgAdminOrOwner(orgUser)) return res.status(400).json({message:"Unauthorized"})
+  const option = {
+    username: foundUser.username,
+    organizationName: orgUser.organization.organization_name,
+    serviceName: service.name
+  }
+  const apiKey = sharedService.generateApiKey(option)
+  const hashApiKey = await sharedService.hashApiKey(apiKey)
+  const createApiKey = apiKeyRepo.create({
+
+  })
+  return res.status(200).json({ message: apiKey })
+  }catch(err){
+    next(err)
+  }
+}
+
 export default {
   createService,
   assignUserToService,
   deleteService,
   getServiceById,
-  getAssignedUserForService,
+  getAssignedUserForService, 
+  generateApiKey
 }

@@ -8,6 +8,7 @@ import organizationService from '../services/organization.service'
 import client from '../configs/redis.configs'
 import bcrypt from 'bcryptjs'
 import { validate as isUUID } from 'uuid'
+import sharedService from '../services/shared.service'
 
 const userRepo = AppDataSource.getRepository(User)
 const orgRepo = AppDataSource.getRepository(Organization)
@@ -153,7 +154,7 @@ const updateOrganization = async (req: any, res: any,next:any) => {
       relations: ['user', 'organization'],
     })
 
-    if (!organizationService.isOrgAdminOrOwner(orgUser))
+    if (!sharedService.isOrgAdminOrOwner(orgUser))
       return res
         .status(401)
         .json({ message: 'User not authorized to update organization name' })
@@ -235,7 +236,7 @@ const sendInvitation = async (req: any, res: any,next:any) => {
       relations: ['user', 'organization'],
     })
 
-    if (!organizationService.isOrgAdminOrOwner(requester))
+    if (!sharedService.isOrgAdminOrOwner(requester))
       return res
         .status(400)
         .json({ message: "you don't have access to send invitation link" })
@@ -410,7 +411,7 @@ const updateUserRole = async (req: any, res: any,next:any) => {
         .status(404)
         .json({ message: 'user does not exist in the organization' })
 
-    if (!organizationService.isOrgAdminOrOwner(reqUserId)) {
+    if (!sharedService.isOrgAdminOrOwner(reqUserId)) {
       return res.status(403).json({ message: 'Forbidden' })
     }
 
