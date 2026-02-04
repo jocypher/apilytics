@@ -4,12 +4,15 @@ import {
   Entity,
   Index,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm'
 import { User } from './user-model.entity'
 import { SubComponent } from './organization-service.entity'
 import { ApiKey } from './api-key.entity'
+import { LogTag } from './log-tag.entity'
 
 @Entity()
 @Index(['organization_id', 'created_at'])
@@ -48,8 +51,13 @@ export class Log {
   @Column({ type: 'jsonb', nullable: true })
   metadata: Record<string, any>
 
-  @Column({ type: 'text', array: true, default: [] })
-  tags: string[]
+  @ManyToMany(() => LogTag, (tag) => tag.logs)
+  @JoinTable({
+    name: 'log_log_tag',
+    joinColumn: { name: 'log_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'tag_id', referencedColumnName: 'id' },
+  })
+  tags: LogTag[]
 
   @CreateDateColumn()
   created_at: Date

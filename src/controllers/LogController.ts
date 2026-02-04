@@ -71,11 +71,10 @@ const createManualLogs = async (req: any, res: any) => {
         .status(401)
         .json({ message: "The organization with the service isn't available" })
 
-    // TODO: change tags: logTagId to logTag: tag
     const createManualLogs = logRepo.create({
       message: logMessage,
       logLevel: logStatus,
-      tags: [],
+      tags: [tag],
       created_by: orgUser.user,
       sub_component: orgService,
     })
