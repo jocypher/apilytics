@@ -2,10 +2,10 @@ import { User } from '../models/user-model.entity'
 import AppDataSource from '../configs/app-datasource.config'
 import { SubComponent } from '../models/organization-service.entity'
 import { Log } from '../models/log-item.entity'
-import organizationService from '../services/organization.service'
 import { OrganizationUser } from '../models/organization-user.entity'
 import { LogTag } from '../models/log-tag.entity'
 import sharedService from '../services/shared.service'
+import { ApiKey } from '../models/api-key.entity'
 
 
 const userRepo = AppDataSource.getRepository(User)
@@ -13,6 +13,7 @@ const orgUserRepo = AppDataSource.getRepository(OrganizationUser)
 const orgServiceRepo = AppDataSource.getRepository(SubComponent)
 const logRepo = AppDataSource.getRepository(Log)
 const logTagRepo = AppDataSource.getRepository(LogTag)
+const apiKeyRepo = AppDataSource.getRepository(ApiKey)
 
 // This controller will handle both the manual logs and the automated logs
 const createManualLogs = async (req: any, res: any) => {
@@ -138,13 +139,21 @@ const getAllManualLogs = async (req: any, res: any) => {
 
 // pagination, skip, limit
 
-const getAutomatedLogs = async (req: any, res: any) => {
-  const page = Number(req.query.page) || 1
-  const limit = Number(req.query.limit) || 10
-  const skip = (page - 1) * limit
-  const {apiKey} = req.body
+const ingestLogs = async (req: any, res: any) => {
+  const {message, level} = req.body
 
-  
+  logRepo.save({
+    message,
+    level,
+    api_key: req.apiKey,
+    sub_component: req.subComponent,
+    organization: req.organization,
+    created_by_user: req.apiKey.created_by_user,
+  })
+
+  req.apiKey.last_used_at = new Date()
+  await apiKeyRepo.save(req.apiKey)
+  return res.status(201).json({message:"Logs ingested"})
 }
 
-export default { createManualLogs, getAllManualLogs, getAutomatedLogs }
+export default { createManualLogs, getAllManualLogs, ingestLogs }

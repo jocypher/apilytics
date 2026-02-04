@@ -309,8 +309,15 @@ if(!service) return res.status(404).json({message:"service not found"})
   const apiKey = sharedService.generateApiKey(option)
   const hashApiKey = await sharedService.hashApiKey(apiKey)
   const createApiKey = apiKeyRepo.create({
-
+    key_hash: hashApiKey,
+    key_prefix: apiKey.slice(0, 6),
+    subcomponent: service,
+    is_active: true,
+    created_by_user: orgUser.user,
+    expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
   })
+
+  await apiKeyRepo.save(createApiKey)
   return res.status(200).json({ message: apiKey })
   }catch(err){
     next(err)

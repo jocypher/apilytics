@@ -1,7 +1,7 @@
 import express from 'express'
 import logsController from '../../controllers/LogController'
-import { verify } from 'jsonwebtoken'
 import verifyJwtMiddlewares from '../../middlewares/verifyJwt.middlewares'
+import { verifyApiKey } from '../../middlewares/verifyApi.middlewares'
 const routes = express.Router()
 
 // routes for both the manual logs and the automatic logs
@@ -22,10 +22,10 @@ routes.get(
 )
 
 // GET /org/:orgId/service/:serviceId/logs/automated
-routes.get(
-  '/:orgId/service/:serviceId/logs/automated',
-  verifyJwtMiddlewares.verifyJwt,
-  logsController.getAutomatedLogs
+routes.post(
+  '/logs/ingest',
+  verifyApiKey,
+  logsController.ingestLogs
 )
 
 export default routes
