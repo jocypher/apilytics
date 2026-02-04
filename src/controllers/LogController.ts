@@ -146,7 +146,6 @@ const ingestLogs = async (req: any, res: any) => {
     level,
     api_key: req.apiKey,
     sub_component: req.subComponent,
-    organization: req.organization,
     created_by_user: req.apiKey.created_by_user,
   })
 
