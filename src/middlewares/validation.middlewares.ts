@@ -17,7 +17,7 @@ export const validate = (req:any, res:any, next:any)=>{
         })
         return res.status(400).json({
             success:false,
-            message:"Validatio failed",
+            message:"Validation failed",
             errors: formattedErrors
         })
     }
