@@ -136,7 +136,7 @@ const getAllManualLogs = async (req: any, res: any) => {
   }
 }
 
-// pagination, skip, limit
+
 
 const ingestLogs = async (req: any, res: any) => {
   const {message, level} = req.body

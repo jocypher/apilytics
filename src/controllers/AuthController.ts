@@ -5,15 +5,18 @@ import { User } from '../models/user-model.entity'
 import authService from '../services/auth.service'
 import client from '../configs/redis.configs'
 import jwt from 'jsonwebtoken'
+import { validationResult } from 'express-validator'
 
 let userRepo = AppDataSource.getRepository(User)
 
 const handleSignup = async (req: any, res: any) => {
+
+  const errors = validationResult(req)
+  if(!errors.isEmpty()){
+    return res.status(400).json({errors: errors.array()})
+  }
   const { username, email, password } = req.body
 
-  if (!username || !email || !password) {
-    return res.status(400).json({ message: 'required' })
-  }
   try {
     const hashedPassword = await bcrypt.hash(password, 10)
 
@@ -35,10 +38,6 @@ const handleSignup = async (req: any, res: any) => {
 
 const handleSignin = async (req: any, res: any) => {
   let { email, password } = req.body
-
-  if (!email || !password) {
-    return res.status(400).json({ message: 'required' })
-  }
 
   try {
     let user = await userRepo.findOne({
