@@ -1,4 +1,3 @@
-// Writing the authentication methods
 import bcrypt from 'bcryptjs'
 import AppDataSource from '../configs/app-datasource.config'
 import { User } from '../models/user-model.entity'
@@ -10,10 +9,9 @@ import { validationResult } from 'express-validator'
 let userRepo = AppDataSource.getRepository(User)
 
 const handleSignup = async (req: any, res: any) => {
-
   const errors = validationResult(req)
-  if(!errors.isEmpty()){
-    return res.status(400).json({errors: errors.array()})
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() })
   }
   const { username, email, password } = req.body
 
@@ -55,7 +53,6 @@ const handleSignin = async (req: any, res: any) => {
     if (!isPasswordAccurate) {
       return res.status(401).send('password is inaccurate')
     }
-    // after we authenticate the user we need to sign the user with the token
     const token: string = jwt.sign(
       {
         id: user.id,
@@ -78,14 +75,8 @@ const handleSignin = async (req: any, res: any) => {
   }
 }
 
-// implementing forgot password
-// with this in place we are going to also implement a rate limit operations
-// the purpose of the rate limit is to prevent too much request from brute force
-// Also bots can be used to test the system so its best not to do that
-
 const forgotPassword = async (req: any, res: any) => {
   const { email } = req.body
-  if (!email) return res.status(400).json({ message: 'email required' })
   try {
     const rateLimitKey: string = `rate:forgot:${email}`
     let attempts: string | null = await client.get(rateLimitKey)
@@ -109,26 +100,22 @@ const forgotPassword = async (req: any, res: any) => {
     })
     if (!user) return res.status(404).json({ message: 'user not found' })
 
-    // get the generated otp
     const otp: string = authService.generateOTPCode()
-    console.log(`The otp is called ${otp}`)
-    // hash the generated otp
+
     const hashedOtp: string = await authService.storeHashedOtpCode(otp)
-    console.log(`The otp is called ${hashedOtp}`)
 
     await client.set(`otp:${email}`, hashedOtp, {
       EX: 120,
     })
 
     if (attempts) {
-      console.log(`the current attempts are ${attempts}`)
       await client.incr(rateLimitKey)
     } else {
       await client.set(rateLimitKey, '1', {
         EX: 3600,
       })
     }
-    // send email for the otp generated
+
     await authService.sendEmail(email, otp, user.username)
 
     return res.status(200).json({
@@ -143,9 +130,7 @@ const forgotPassword = async (req: any, res: any) => {
 
 const verifyOtp = async (req: any, res: any) => {
   const { otp, email } = req.body
-  if (!email || !otp) return res.status(400)
   try {
-    //retreive the hashedotp code
     const storeHashedOtpCode: string | null = await client.get(`otp:${email}`)
 
     if (!storeHashedOtpCode)
@@ -155,7 +140,6 @@ const verifyOtp = async (req: any, res: any) => {
 
     if (!isValid) return res.status(401).send('Invalid otp')
 
-    // To ensure theres is security and stability we delete the stored values after use from the cache system
     await client.del(`otp:${email}`)
 
     await client.set(`reset:password:${email}`, 'yes', {
@@ -169,9 +153,6 @@ const verifyOtp = async (req: any, res: any) => {
 
 const resetPassword = async (req: any, res: any) => {
   const { email, newPassword } = req.body
-
-  if (!email || !newPassword)
-    return res.status(400).json({ message: 'required fields' })
 
   try {
     const storeResetPasswordToken: string | null = await client.get(
@@ -209,8 +190,6 @@ const resetPassword = async (req: any, res: any) => {
 const updateUser = async (req: any, res: any, next: any) => {
   const { email, password, username } = req.body
   const userId = req.id
-
-  if (!userId) return res.status(400).json({ message: 'user id not found' })
 
   try {
     let user: User | null = await userRepo.findOne({
@@ -302,5 +281,5 @@ export default {
   updateUser,
   handleLogout,
   getCurrentUser,
-  deleteAccount
+  deleteAccount,
 }

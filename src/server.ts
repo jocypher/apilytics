@@ -10,13 +10,15 @@ import logs from './routes/logs/logs.routes'
 import reqLogger from "./middlewares/reqlogger.middleware"
 import errorLogger from "./middlewares/errorlog.middleware"
 import errorHandler from "./middlewares/errorhandler.middlewares"
+import helmet from 'helmet'
+import cors from "cors"
 const app = express()
 
 const PORT = process.env.PORT || 4000
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
-
-
+app.use(helmet())
+app.use(cors())
 app.use(reqLogger)
 
 AppDataSource.initialize()

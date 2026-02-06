@@ -15,25 +15,29 @@ const logRepo = AppDataSource.getRepository(Log)
 const logTagRepo = AppDataSource.getRepository(LogTag)
 const apiKeyRepo = AppDataSource.getRepository(ApiKey)
 
-// This controller will handle both the manual logs and the automated logs
 const createManualLogs = async (req: any, res: any) => {
   const userId = req.id
   const { orgId, serviceId } = req.params
-  const { logMessage, logStatus, logTagId } = req.body
+  const { logMessage, logStatus, logTagName } = req.body
 
-  if (!logMessage || !logStatus || !logTagId) {
-    return res.status(400).json({ message: 'Required field parameters' })
-  }
   try {
-    const tag = await logTagRepo.findOne({
+    let tag = await logTagRepo.findOne({
       where: {
-        id: logTagId,
+        tag_name: logTagName,
       },
     })
 
     if (!tag) {
-      return res.status(400).json({ message: 'Invalid log tag' })
+     tag =  logTagRepo.create({
+          tag_name: logTagName,
+          description: '',
+          organization_id: orgId,
+          logs: [],
+
+      })
+     await logTagRepo.save(tag)
     }
+    
     const orgUser = await orgUserRepo.findOne({
       where: {
         organization: { id: orgId },
@@ -87,7 +91,7 @@ const createManualLogs = async (req: any, res: any) => {
   }
 }
 
-// get all manual logs
+
 const getAllManualLogs = async (req: any, res: any) => {
   const userId = req.id
   const { orgId, serviceId } = req.params
@@ -106,7 +110,7 @@ const getAllManualLogs = async (req: any, res: any) => {
         .status(404)
         .json({ message: `Not a member of the organization` })
 
-    // check the assigned User
+
     const assignedUser = await orgServiceRepo.findOne({
       where: {
         id: serviceId,

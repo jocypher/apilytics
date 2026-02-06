@@ -3,16 +3,17 @@ const routes = express.Router()
 import authController from '../../controllers/AuthController'
 import verifyJwtMiddlewares from '../../middlewares/verifyJwt.middlewares'
 import { body } from 'express-validator'
+import { validate } from 'uuid'
 
-// working on the auth routes
-
-// POST /register
 routes.post(
   '/register',
   [
-    body('username').notEmpty().withMessage('username is required').trim(),
-    body('email').notEmpty().withMessage('Email is required')
-      .isEmail().withMessage('Invalid email address')
+    body('username').notEmpty().withMessage('Username is required').trim(),
+    body('email')
+      .notEmpty()
+      .withMessage('Email is required')
+      .isEmail()
+      .withMessage('Invalid email address')
       .normalizeEmail()
       .trim()
       .withMessage('Invalid email address'),
@@ -20,10 +21,10 @@ routes.post(
       .isLength({ min: 10 })
       .withMessage('Password must be at least 10 characters long'),
   ],
+  validate,
   authController.handleSignup
 )
 
-// POST /login
 routes.post(
   '/login',
   [
@@ -40,30 +41,94 @@ routes.post(
       .isLength({ min: 10 })
       .withMessage('Password must be atleast 10 characters long'),
   ],
+  validate,
   authController.handleSignin
 )
 
-// POST /forgot-password
-routes.post('/forgot-password', authController.forgotPassword)
+routes.post(
+  '/forgot-password',
+  [
+    body('email')
+      .notEmpty()
+      .withMessage('Email is required')
+      .isEmail()
+      .withMessage('Invalid email address')
+      .normalizeEmail()
+      .trim(),
+  ],
+  validate,
+  authController.forgotPassword
+)
 
-// POST /verify-otp
-routes.post('/verify-otp', authController.verifyOtp)
+routes.post(
+  '/verify-otp',
+  [
+    body('email')
+      .notEmpty()
+      .withMessage('Email is required')
+      .isEmail()
+      .withMessage('Invalid email address')
+      .normalizeEmail()
+      .trim(),
+    body('otp')
+      .notEmpty()
+      .withMessage('Otp code is required')
+      .isLength({ min: 6 }),
+  ],
+  validate,
+  authController.verifyOtp
+)
 
-// POST /reset-password
-routes.post('/reset-password', authController.resetPassword)
+routes.post(
+  '/reset-password',
+  [
+    body('email')
+      .notEmpty()
+      .withMessage('Email is required')
+      .isEmail()
+      .withMessage('Invalid email')
+      .normalizeEmail()
+      .trim(),
 
-// PUT /update
-routes.post('/update-info', authController.updateUser)
+    body('password')
+      .notEmpty()
+      .withMessage('Password is required')
+      .isLength({ min: 10 })
+      .withMessage('Password must be atleast 10 characters long'),
+  ],
+  validate,
+  authController.resetPassword
+)
 
-// POST /logout
-routes.post("/logout", authController.handleLogout)
+routes.post(
+  '/update-info',
+  [
+    body('email')
+      .notEmpty()
+      .withMessage('Email is required')
+      .isEmail()
+      .withMessage('Invalid email')
+      .normalizeEmail()
+      .trim(),
+    body('password')
+      .notEmpty()
+      .withMessage('Password is required')
+      .isLength({ min: 10 })
+      .withMessage('Password must be atleast 10 characters long'),
+    body('username').notEmpty().withMessage('username is require'),
+  ],
+  validate,
+  authController.updateUser
+)
 
+routes.post('/logout', authController.handleLogout)
 
+routes.get('/me', verifyJwtMiddlewares.verifyJwt, authController.getCurrentUser)
 
-// GET /me
-routes.get("/me", verifyJwtMiddlewares.verifyJwt, authController.getCurrentUser)
-
-// DELETE /user
-routes.delete("/:id", verifyJwtMiddlewares.verifyJwt, authController.deleteAccount)
+routes.delete(
+  '/:id',
+  verifyJwtMiddlewares.verifyJwt,
+  authController.deleteAccount
+)
 
 export default routes
