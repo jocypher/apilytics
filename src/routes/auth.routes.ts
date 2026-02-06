@@ -1,7 +1,7 @@
 import express from 'express'
 const routes = express.Router()
-import authController from '../../controllers/AuthController'
-import verifyJwtMiddlewares from '../../middlewares/verifyJwt.middlewares'
+import authController from '../controllers/AuthController'
+import verifyJwtMiddlewares from '../middlewares/verifyJwt.middlewares'
 import { body } from 'express-validator'
 import { validate } from 'uuid'
 

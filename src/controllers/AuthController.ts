@@ -116,7 +116,7 @@ const forgotPassword = async (req: any, res: any) => {
       })
     }
 
-    await authService.sendEmail(email, otp, user.username)
+    await authService.sendForgotEmail(email, otp, user.username)
 
     return res.status(200).json({
       message: 'OTP code successfully sent',

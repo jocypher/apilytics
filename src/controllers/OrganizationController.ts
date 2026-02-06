@@ -8,13 +8,12 @@ import organizationService from '../services/organization.service'
 import client from '../configs/redis.configs'
 import bcrypt from 'bcryptjs'
 import { validate as isUUID } from 'uuid'
-import sharedService from '../services/shared.service'
+import sharedUtils from '../utils/shared.utils'
 
 const userRepo = AppDataSource.getRepository(User)
 const orgRepo = AppDataSource.getRepository(Organization)
 const orgUserRepo = AppDataSource.getRepository(OrganizationUser)
 
-// creating organization
 const createOrganization = async (req: any, res: any, next:any) => {
 
   const { org_name } = req.body
@@ -28,7 +27,7 @@ const createOrganization = async (req: any, res: any, next:any) => {
     if (!user) {
       return res.status(401).json({ message: 'user not found' })
     }
-    // let the admin creat the organization
+
     let organizationCreated = orgRepo.create({
       organization_name: org_name,
       created_by_id: user.id,
@@ -45,8 +44,6 @@ const createOrganization = async (req: any, res: any, next:any) => {
       role: 'owner',
       invite_status: 'accepted',
     })
-
-    // save the org user in the system
     await orgUserRepo.save(organizationUser)
 
     let orgResult = {
@@ -67,7 +64,6 @@ const createOrganization = async (req: any, res: any, next:any) => {
   }
 }
 
-// get all organizations created by user
 const getAllOrganization = async (req: any, res: any,next:any) => {
   const id = req.id
   try {
@@ -92,7 +88,6 @@ const getAllOrganization = async (req: any, res: any,next:any) => {
   }
 }
 
-// delete organization
 const deleteOrganization = async (req: any, res: any,next:any) => {
   const id = req.id
   const orgId = req.params.id
@@ -112,7 +107,6 @@ const deleteOrganization = async (req: any, res: any,next:any) => {
       })
     }
 
-    // delete children first (safe even with cascade)
     await orgUserRepo.delete({
       organization: { id: orgId },
     })
@@ -128,7 +122,6 @@ const deleteOrganization = async (req: any, res: any,next:any) => {
   }
 }
 
-// update organization name
 const updateOrganization = async (req: any, res: any,next:any) => {
   const orgId = req.params.id
   const { name } = req.body
@@ -136,7 +129,7 @@ const updateOrganization = async (req: any, res: any,next:any) => {
 
   if (!orgId) return res.status(400).json({ message: 'Invalid id' })
   if (!name) return res.status(400).json({ message: 'Bad request' })
-  // first we need to verify the user who wants to make the update on the organization
+
   try {
     const org = await orgRepo.findOne({
       where: {
@@ -154,7 +147,7 @@ const updateOrganization = async (req: any, res: any,next:any) => {
       relations: ['user', 'organization'],
     })
 
-    if (!sharedService.isOrgAdminOrOwner(orgUser))
+    if (!sharedUtils.isOrgAdminOrOwner(orgUser))
       return res
         .status(401)
         .json({ message: 'User not authorized to update organization name' })
@@ -170,12 +163,10 @@ const updateOrganization = async (req: any, res: any,next:any) => {
   }
 }
 
-// get organization by id
 const getOrganizationById = async (req: any, res: any,next:any) => {
   const orgId = req.params.id
   const userId = req.id
-  // to get organization by id ,
-  // check if the org exist and also check the membership of the user
+
   if (!orgId)
     return res
       .status(404)
@@ -210,7 +201,6 @@ const getOrganizationById = async (req: any, res: any,next:any) => {
   }
 }
 
-// send invitation to user
 const sendInvitation = async (req: any, res: any,next:any) => {
 
 
@@ -236,7 +226,7 @@ const sendInvitation = async (req: any, res: any,next:any) => {
       relations: ['user', 'organization'],
     })
 
-    if (!sharedService.isOrgAdminOrOwner(requester))
+    if (!sharedUtils.isOrgAdminOrOwner(requester))
       return res
         .status(400)
         .json({ message: "you don't have access to send invitation link" })
@@ -246,10 +236,9 @@ const sendInvitation = async (req: any, res: any,next:any) => {
     const rawToken = organizationService.generateInviteToken()
     const hashedToken = await organizationService.hashInviteToken(rawToken)
 
-    // frontend invite link
+
     const inviteLink = `${process.env.FRONTEND_URL}/accept-invite?token=${rawToken}&orgId=${organization.id}`
 
-    // store invite in redis 
     await client.set(
       `org_invite:${hashedToken}`,
       JSON.stringify({
@@ -314,7 +303,6 @@ const getMembersInOrganization = async (req: any, res: any,next:any) => {
   }
 }
 
-// accept organization invite
 const acceptOrganizationInvite = async (req: any, res: any, next:any) => {
   const { token, orgId } = req.params
   const userId = req.id
@@ -332,8 +320,7 @@ const acceptOrganizationInvite = async (req: any, res: any, next:any) => {
     })
     if (!user) return res.status(404).json({ message: 'user does not exist' })
 
-    // get token from the redis client
-    // compare to see if there's match
+
     const keys = await client.keys(`org_invite:*`)
 
     let inviteData: any = null
@@ -363,7 +350,7 @@ const acceptOrganizationInvite = async (req: any, res: any, next:any) => {
     if (!organization)
       return res.status(500).json({ message: 'no org available' })
 
-    // check the existing membership
+
     const existingMembership = await orgUserRepo.findOne({
       where: {
         user: { id: userId },
@@ -375,7 +362,7 @@ const acceptOrganizationInvite = async (req: any, res: any, next:any) => {
       return res
         .status(400)
         .json({ message: 'User already a member of the organization' })
-    // create the user
+
     const orgUser = orgUserRepo.create({
       display_name: user.username,
       user: user,
@@ -391,7 +378,6 @@ const acceptOrganizationInvite = async (req: any, res: any, next:any) => {
   }
 }
 
-// update the user role for the organization
 const updateUserRole = async (req: any, res: any,next:any) => {
   const { targetUserId, orgId } = req.params
   const reqUserId = req.id
@@ -411,7 +397,7 @@ const updateUserRole = async (req: any, res: any,next:any) => {
         .status(404)
         .json({ message: 'user does not exist in the organization' })
 
-    if (!sharedService.isOrgAdminOrOwner(reqUserId)) {
+    if (!sharedUtils.isOrgAdminOrOwner(reqUserId)) {
       return res.status(403).json({ message: 'Forbidden' })
     }
 

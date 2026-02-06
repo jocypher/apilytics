@@ -12,7 +12,7 @@ const generateOTPCode = (): string => {
 }
 
 // send email  for forgot password
-const sendEmail = async (email: string, message: string, username: string) => {
+const sendForgotEmail = async (email: string, message: string, username: string) => {
   try {
     const response = await axios.post(
       'https://api.mailjet.com/v3.1/send',
@@ -58,4 +58,4 @@ const storeHashedOtpCode = async (otp: string): Promise<string> => {
   return hashedCode
 }
 
-export default { generateOTPCode, sendEmail, storeHashedOtpCode }
+export default { generateOTPCode, sendForgotEmail, storeHashedOtpCode }

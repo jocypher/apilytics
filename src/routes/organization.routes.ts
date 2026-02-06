@@ -1,6 +1,6 @@
 import express from 'express'
-import verifyJwtMiddlewares from '../../middlewares/verifyJwt.middlewares'
-import organizationController from '../../controllers/OrganizationController'
+import verifyJwtMiddlewares from '../middlewares/verifyJwt.middlewares'
+import organizationController from '../controllers/OrganizationController'
 
 const routes = express.Router()
 
@@ -30,20 +30,17 @@ routes.post(
   organizationController.sendInvitation
 )
 
-
 routes.put(
   '/:id',
   verifyJwtMiddlewares.verifyJwt,
   organizationController.updateOrganization
 )
 
-
 routes.delete(
   '/:id',
   verifyJwtMiddlewares.verifyJwt,
   organizationController.deleteOrganization
 )
-
 
 routes.get(
   '/:id',
@@ -56,7 +53,5 @@ routes.get(
   verifyJwtMiddlewares.verifyJwt,
   organizationController.getMembersInOrganization
 )
-
-
 
 export default routes

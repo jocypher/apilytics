@@ -2,16 +2,16 @@ import express from 'express'
 import dotenv from 'dotenv'
 dotenv.config()
 import AppDataSource from './configs/app-datasource.config'
-import auth from './routes/auth/auth.routes'
+import auth from './routes/auth.routes'
 import client from './configs/redis.configs'
-import org from './routes/organization/organization.routes'
-import service from './routes/subcomponent/organization-service.routes'
-import logs from './routes/logs/logs.routes'
-import reqLogger from "./middlewares/reqlogger.middleware"
-import errorLogger from "./middlewares/errorlog.middleware"
-import errorHandler from "./middlewares/errorhandler.middlewares"
+import org from './routes/organization.routes'
+import service from './routes/organization-service.routes'
+import logs from './routes/logs.routes'
+import reqLogger from './middlewares/reqlogger.middleware'
+import errorLogger from './middlewares/errorlog.middleware'
+import errorHandler from './middlewares/errorhandler.middlewares'
 import helmet from 'helmet'
-import cors from "cors"
+import cors from 'cors'
 const app = express()
 
 const PORT = process.env.PORT || 4000
@@ -29,14 +29,12 @@ AppDataSource.initialize()
     app.use('/api/v1/organization', org)
     app.use('/api/v1/service', service)
     app.use('/api/v1/logs', logs)
-    
-      app.use(errorLogger)
-      app.use(errorHandler)
+
+    app.use(errorLogger)
+    app.use(errorHandler)
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
   })
-  
+
   .catch((err: any) => {
     console.error(err)
   })
-
-  

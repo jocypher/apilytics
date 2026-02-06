@@ -4,7 +4,7 @@ import { SubComponent } from '../models/organization-service.entity'
 import { Log } from '../models/log-item.entity'
 import { OrganizationUser } from '../models/organization-user.entity'
 import { LogTag } from '../models/log-tag.entity'
-import sharedService from '../services/shared.service'
+import sharedUtils from '../utils/shared.utils'
 import { ApiKey } from '../models/api-key.entity'
 
 
@@ -49,7 +49,7 @@ const createManualLogs = async (req: any, res: any) => {
       return res.status(404).json({ message: 'User Not found' })
     }
 
-    if (!sharedService.isOrgAdminOrOwner(orgUser)) {
+    if (!sharedUtils.isOrgAdminOrOwner(orgUser)) {
       return res.status(401).json({ message: 'Forbidden' })
     }
 

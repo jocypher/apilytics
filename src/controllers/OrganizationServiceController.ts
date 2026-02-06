@@ -2,7 +2,7 @@ import AppDataSource from '../configs/app-datasource.config'
 import { OrganizationUser } from '../models/organization-user.entity'
 import { SubComponent } from '../models/organization-service.entity'
 import { SubComponentUser } from '../models/org-service-user.entity'
-import sharedService from '../services/shared.service'
+import sharedUtils from '../utils/shared.utils'
 import { User } from '../models/user-model.entity'
 import { ApiKey } from '../models/api-key.entity'
 
@@ -31,7 +31,7 @@ const createService = async (req: any, res: any,next:any) => {
     if (!orgMember) {
       return res.status(403).json({ message: 'Not a member' })
     }
-    if (!sharedService.isOrgAdminOrOwner(orgMember)) {
+    if (!sharedUtils.isOrgAdminOrOwner(orgMember)) {
       return res.status(401).json({ message: 'User is unauthorized' })
     }
     const newService = serviceRepo.create({
@@ -69,7 +69,7 @@ const assignUserToService = async (req: any, res: any,next:any) => {
       return res.status(403).json({ message: 'Not a member' })
     }
 
-    if (!sharedService.isOrgAdminOrOwner(requesterMembership)) {
+    if (!sharedUtils.isOrgAdminOrOwner(requesterMembership)) {
       return res.status(401).json({ message: 'User is unauthorized' })
     }
 
@@ -143,7 +143,7 @@ const deleteService = async (req: any, res: any,next:any) => {
     if (!orgMember) {
       return res.status(403).json({ message: 'Not a member' })
     }
-    if (!sharedService.isOrgAdminOrOwner(orgMember))
+    if (!sharedUtils.isOrgAdminOrOwner(orgMember))
       return res.status(401).json({ message: 'Unauthorized' })
 
     const foundService = await serviceRepo.findOne({
@@ -240,7 +240,7 @@ const getAssignedUserForService = async (req: any, res: any,next:any) => {
     if (!foundService) {
       return res.status(404).json({ message: 'Service not found' })
     }
-    if (!sharedService.isOrgAdminOrOwner(orgMember)) {
+    if (!sharedUtils.isOrgAdminOrOwner(orgMember)) {
       return res.status(403).json({ message: 'Forbidden' })
     }
 
@@ -300,14 +300,15 @@ const service = await serviceRepo.findOne({
   }
 })
 if(!service) return res.status(404).json({message:"service not found"})
-  if(!sharedService.isOrgAdminOrOwner(orgUser)) return res.status(400).json({message:"Unauthorized"})
+  if (!sharedUtils.isOrgAdminOrOwner(orgUser))
+    return res.status(400).json({ message: 'Unauthorized' })
   const option = {
     username: foundUser.username,
     organizationName: orgUser.organization.organization_name,
     serviceName: service.name
   }
-  const apiKey = sharedService.generateApiKey(option)
-  const hashApiKey = await sharedService.hashApiKey(apiKey)
+  const apiKey = sharedUtils.generateApiKey(option)
+  const hashApiKey = await sharedUtils.hashApiKey(apiKey)
   const createApiKey = apiKeyRepo.create({
     key_hash: hashApiKey,
     key_prefix: apiKey.slice(0, 6),
