@@ -22,14 +22,15 @@ export const verifyApiKey = async (req: any, res: any, next: any) => {
     })
 
     if (!apiKey) return res.status(401).json({ messag: 'No api key found' })
-    
-    if(apiKey.expires_at  && apiKey.expires_at < new Date()) return res.status(401).json({message:"Invalid Api Key"})
-    
-     req.apiKey = apiKey
-     req.subcomponentName = apiKey.subcomponent.name
-     req.organizationName = apiKey.subcomponent.organization.organization_name
-     req.subComponent = apiKey.subcomponent
-     req.organization = apiKey.subcomponent.organization
+
+    if (apiKey.expires_at && apiKey.expires_at < new Date())
+      return res.status(401).json({ message: 'Invalid Api Key' })
+
+    req.apiKey = apiKey
+    req.subcomponentName = apiKey.subcomponent.name
+    req.organizationName = apiKey.subcomponent.organization.organization_name
+    req.subComponent = apiKey.subcomponent
+    req.organization = apiKey.subcomponent.organization
 
     next()
   } catch (err) {

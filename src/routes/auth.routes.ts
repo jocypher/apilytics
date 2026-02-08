@@ -94,7 +94,7 @@ routes.post(
       .notEmpty()
       .withMessage('Password is required')
       .isLength({ min: 10 })
-      .withMessage('Password must be atleast 10 characters long'),
+      .withMessage('Password must be atleast 10 characters long').trim(),
   ],
   validate,
   authController.resetPassword
@@ -114,7 +114,9 @@ routes.post(
       .notEmpty()
       .withMessage('Password is required')
       .isLength({ min: 10 })
-      .withMessage('Password must be atleast 10 characters long'),
+      .withMessage('Password must be atleast 10 characters long')
+      .trim()
+      ,
     body('username').notEmpty().withMessage('username is require'),
   ],
   validate,

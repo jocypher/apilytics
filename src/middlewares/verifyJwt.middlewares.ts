@@ -15,7 +15,6 @@ const verifyJwt = (err: any, req: any, res: any, next: any) => {
     if (err) return res.status(403).json({ message: 'Forbidden' })
     req.id = decode.id
     req.email = decode.email
-    // next(err);
   })
   next(err)
 }

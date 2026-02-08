@@ -9,9 +9,9 @@ const routes = express.Router()
 routes.post(
   '/:orgId/service/:serviceId/logs/manual',
   [
-    body('logMessage').notEmpty().withMessage('Log message required'),
-    body('logStatus').notEmpty().withMessage('Log status is required'),
-    body('tag name').notEmpty().withMessage('Tag name is required'),
+    body('logMessage').notEmpty().withMessage('Log message required').trim(),
+    body('logStatus').notEmpty().withMessage('Log status is required').trim(),
+    body('tag name').notEmpty().withMessage('Tag name is required').trim(),
   ],
   validate,
   verifyJwtMiddlewares.verifyJwt,
@@ -26,7 +26,7 @@ routes.get(
 
 routes.post(
   '/logs/ingest',
-  [body('message').notEmpty().withMessage('log message is required')],
+  [body('message').notEmpty().withMessage('log message is required').trim()],
   validate,
   verifyApiKey,
   logsController.ingestLogs
