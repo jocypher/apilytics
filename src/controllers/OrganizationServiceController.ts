@@ -2,10 +2,9 @@ import AppDataSource from '../configs/app-datasource.config'
 import { OrganizationUser } from '../models/organization-user.entity'
 import { SubComponent } from '../models/organization-service.entity'
 import { SubComponentUser } from '../models/org-service-user.entity'
-import sharedUtils from '../utils/shared.utils'
+import sharedUtils from '../validation/utils/shared.utils'
 import { User } from '../models/user-model.entity'
 import { ApiKey } from '../models/api-key.entity'
-
 
 const orgUserRepo = AppDataSource.getRepository(OrganizationUser)
 const serviceRepo = AppDataSource.getRepository(SubComponent)
@@ -13,7 +12,7 @@ const serviceUserRepo = AppDataSource.getRepository(SubComponentUser)
 const userRepo = AppDataSource.getRepository(User)
 const apiKeyRepo = AppDataSource.getRepository(ApiKey)
 // service controller
-const createService = async (req: any, res: any,next:any) => {
+const createService = async (req: any, res: any, next: any) => {
   const userId = req.id
   const { orgId } = req.params
   const { name } = req.body
@@ -48,7 +47,7 @@ const createService = async (req: any, res: any,next:any) => {
   }
 }
 
-const assignUserToService = async (req: any, res: any,next:any) => {
+const assignUserToService = async (req: any, res: any, next: any) => {
   const userId = req.id
   const { orgId, serviceId, roleToChangeId } = req.params
 
@@ -57,7 +56,6 @@ const assignUserToService = async (req: any, res: any,next:any) => {
   }
 
   try {
-
     const requesterMembership = await orgUserRepo.findOne({
       where: {
         organization: { id: orgId },
@@ -72,7 +70,6 @@ const assignUserToService = async (req: any, res: any,next:any) => {
     if (!sharedUtils.isOrgAdminOrOwner(requesterMembership)) {
       return res.status(401).json({ message: 'User is unauthorized' })
     }
-
 
     const targetMembership = await orgUserRepo.findOne({
       where: {
@@ -93,17 +90,17 @@ const assignUserToService = async (req: any, res: any,next:any) => {
         id: serviceId,
         organization: { id: orgId },
       },
-      relations: ["organization"]
+      relations: ['organization'],
     })
     if (!service) return res.status(404).json({ message: 'Service not found' })
 
     const existingAssignment = await serviceUserRepo.findOne({
       where: {
         user: { id: targetMembership.user.id },
-        
+
         sub_component: { id: service.id },
       },
-      relations: ["user"]
+      relations: ['user'],
     })
 
     if (existingAssignment) {
@@ -129,7 +126,7 @@ const assignUserToService = async (req: any, res: any,next:any) => {
 }
 
 // delete the service
-const deleteService = async (req: any, res: any,next:any) => {
+const deleteService = async (req: any, res: any, next: any) => {
   const userId = req.id
   const { orgId, svcId } = req.params
   try {
@@ -169,7 +166,7 @@ const deleteService = async (req: any, res: any,next:any) => {
 }
 
 // get service by id
-const getServiceById = async (req: any, res: any,next:any) => {
+const getServiceById = async (req: any, res: any, next: any) => {
   const requesterId = req.id
   const { svcId, orgId } = req.params
   try {
@@ -178,7 +175,7 @@ const getServiceById = async (req: any, res: any,next:any) => {
         organization: { id: orgId },
         user: { id: requesterId },
       },
-      relations: ['organization', 'user']
+      relations: ['organization', 'user'],
     })
 
     if (!membership)
@@ -206,7 +203,7 @@ const getServiceById = async (req: any, res: any,next:any) => {
 
 // get the assigned users for this service
 // include pagination and limit
-const getAssignedUserForService = async (req: any, res: any,next:any) => {
+const getAssignedUserForService = async (req: any, res: any, next: any) => {
   const userId = req.id
   const { orgId, svcId } = req.params
   const page = Number(req.query.page) || 1
@@ -254,7 +251,7 @@ const getAssignedUserForService = async (req: any, res: any,next:any) => {
     })
     if (assignments.length === 0)
       return res.status(404).json({ message: 'No assigned users' })
-    const users = assignments.map((a:SubComponentUser) => a.user)
+    const users = assignments.map((a: SubComponentUser) => a.user)
     return res.status(200).json({
       page,
       limit,
@@ -271,56 +268,57 @@ const getAssignedUserForService = async (req: any, res: any,next:any) => {
 // brain teaser
 // 1. A company has created an org , created a service in the table , now what is left is how to get the logs
 // Now with the automated logs .
-// We need an api that connects to the appl , 
+// We need an api that connects to the appl ,
 // so they need to request for an api key
-// however we need to confirm their details 
+// however we need to confirm their details
 
-const generateApiKey = async(req:any, res:any, next:any)=>{
+const generateApiKey = async (req: any, res: any, next: any) => {
   const userId = req.id
-  const {orgId , serviceId} = req.params
+  const { orgId, serviceId } = req.params
 
-  try{
+  try {
     const foundUser = await userRepo.findOne({
-      where:{
-        id: userId
-      }
+      where: {
+        id: userId,
+      },
     })
-    if(!foundUser) return res.status(404).json({message:"user not found"})
+    if (!foundUser) return res.status(404).json({ message: 'user not found' })
     const orgUser = await orgUserRepo.findOne({
-  where:{
-    organization:{id:orgId},
-    user:{id:userId}
-  },
-  relations:["user", "organization"]
-})
-if(!orgUser) return res.status(404).json({message:"User with org not found"})
-const service = await serviceRepo.findOne({
-  where:{
-    id:serviceId
-  }
-})
-if(!service) return res.status(404).json({message:"service not found"})
-  if (!sharedUtils.isOrgAdminOrOwner(orgUser))
-    return res.status(400).json({ message: 'Unauthorized' })
-  const option = {
-    username: foundUser.username,
-    organizationName: orgUser.organization.organization_name,
-    serviceName: service.name
-  }
-  const apiKey = sharedUtils.generateApiKey(option)
-  const hashApiKey = await sharedUtils.hashApiKey(apiKey)
-  const createApiKey = apiKeyRepo.create({
-    key_hash: hashApiKey,
-    key_prefix: apiKey.slice(0, 6),
-    subcomponent: service,
-    is_active: true,
-    created_by_user: orgUser.user,
-    expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-  })
+      where: {
+        organization: { id: orgId },
+        user: { id: userId },
+      },
+      relations: ['user', 'organization'],
+    })
+    if (!orgUser)
+      return res.status(404).json({ message: 'User with org not found' })
+    const service = await serviceRepo.findOne({
+      where: {
+        id: serviceId,
+      },
+    })
+    if (!service) return res.status(404).json({ message: 'service not found' })
+    if (!sharedUtils.isOrgAdminOrOwner(orgUser))
+      return res.status(400).json({ message: 'Unauthorized' })
+    const option = {
+      username: foundUser.username,
+      organizationName: orgUser.organization.organization_name,
+      serviceName: service.name,
+    }
+    const apiKey = sharedUtils.generateApiKey(option)
+    const hashApiKey = await sharedUtils.hashApiKey(apiKey)
+    const createApiKey = apiKeyRepo.create({
+      key_hash: hashApiKey,
+      key_prefix: apiKey.slice(0, 6),
+      subcomponent: service,
+      is_active: true,
+      created_by_user: orgUser.user,
+      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    })
 
-  await apiKeyRepo.save(createApiKey)
-  return res.status(200).json({ message: apiKey })
-  }catch(err){
+    await apiKeyRepo.save(createApiKey)
+    return res.status(200).json({ message: apiKey })
+  } catch (err) {
     next(err)
   }
 }
@@ -330,6 +328,6 @@ export default {
   assignUserToService,
   deleteService,
   getServiceById,
-  getAssignedUserForService, 
-  generateApiKey
+  getAssignedUserForService,
+  generateApiKey,
 }

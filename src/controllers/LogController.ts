@@ -4,9 +4,8 @@ import { SubComponent } from '../models/organization-service.entity'
 import { Log } from '../models/log-item.entity'
 import { OrganizationUser } from '../models/organization-user.entity'
 import { LogTag } from '../models/log-tag.entity'
-import sharedUtils from '../utils/shared.utils'
+import sharedUtils from '../validation/utils/shared.utils'
 import { ApiKey } from '../models/api-key.entity'
-
 
 const userRepo = AppDataSource.getRepository(User)
 const orgUserRepo = AppDataSource.getRepository(OrganizationUser)
@@ -28,16 +27,15 @@ const createManualLogs = async (req: any, res: any) => {
     })
 
     if (!tag) {
-     tag =  logTagRepo.create({
-          tag_name: logTagName,
-          description: '',
-          organization_id: orgId,
-          logs: [],
-
+      tag = logTagRepo.create({
+        tag_name: logTagName,
+        description: '',
+        organization_id: orgId,
+        logs: [],
       })
-     await logTagRepo.save(tag)
+      await logTagRepo.save(tag)
     }
-    
+
     const orgUser = await orgUserRepo.findOne({
       where: {
         organization: { id: orgId },
@@ -62,7 +60,7 @@ const createManualLogs = async (req: any, res: any) => {
       return res.status(404).json({ message: 'User Not found' })
     }
 
-    const orgService =await orgServiceRepo.findOne({
+    const orgService = await orgServiceRepo.findOne({
       where: {
         id: serviceId,
         organization: { id: orgId },
@@ -91,7 +89,6 @@ const createManualLogs = async (req: any, res: any) => {
   }
 }
 
-
 const getAllManualLogs = async (req: any, res: any) => {
   const userId = req.id
   const { orgId, serviceId } = req.params
@@ -109,7 +106,6 @@ const getAllManualLogs = async (req: any, res: any) => {
       return res
         .status(404)
         .json({ message: `Not a member of the organization` })
-
 
     const assignedUser = await orgServiceRepo.findOne({
       where: {
@@ -140,10 +136,8 @@ const getAllManualLogs = async (req: any, res: any) => {
   }
 }
 
-
-
 const ingestLogs = async (req: any, res: any) => {
-  const {message, level} = req.body
+  const { message, level } = req.body
 
   logRepo.save({
     message,
@@ -155,7 +149,7 @@ const ingestLogs = async (req: any, res: any) => {
 
   req.apiKey.last_used_at = new Date()
   await apiKeyRepo.save(req.apiKey)
-  return res.status(201).json({message:"Logs ingested"})
+  return res.status(201).json({ message: 'Logs ingested' })
 }
 
 export default { createManualLogs, getAllManualLogs, ingestLogs }

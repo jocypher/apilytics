@@ -1,5 +1,5 @@
 import crypto from 'crypto'
-import { OrganizationUser } from '../models/organization-user.entity'
+import { OrganizationUser } from '../../models/organization-user.entity'
 
 const generateApiKey = (options: {
   organizationName: string

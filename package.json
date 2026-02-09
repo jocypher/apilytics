@@ -32,6 +32,7 @@
     "express": "^5.2.1",
     "express-validator": "^7.3.1",
     "helmet": "^8.1.0",
+    "joi": "^18.0.2",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.16.3",
     "redis": "^5.10.0",

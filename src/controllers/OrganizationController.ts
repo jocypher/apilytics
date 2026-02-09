@@ -1,5 +1,3 @@
-
-
 import AppDataSource from '../configs/app-datasource.config'
 import { Organization } from '../models/organization-model.entity'
 import { User } from '../models/user-model.entity'
@@ -8,14 +6,13 @@ import organizationService from '../services/organization.service'
 import client from '../configs/redis.configs'
 import bcrypt from 'bcryptjs'
 import { validate as isUUID } from 'uuid'
-import sharedUtils from '../utils/shared.utils'
+import sharedUtils from '../validation/utils/shared.utils'
 
 const userRepo = AppDataSource.getRepository(User)
 const orgRepo = AppDataSource.getRepository(Organization)
 const orgUserRepo = AppDataSource.getRepository(OrganizationUser)
 
-const createOrganization = async (req: any, res: any, next:any) => {
-
+const createOrganization = async (req: any, res: any, next: any) => {
   const { org_name } = req.body
   const id = req.id
   try {
@@ -64,7 +61,7 @@ const createOrganization = async (req: any, res: any, next:any) => {
   }
 }
 
-const getAllOrganization = async (req: any, res: any,next:any) => {
+const getAllOrganization = async (req: any, res: any, next: any) => {
   const id = req.id
   try {
     const user = await userRepo.findOne({
@@ -88,7 +85,7 @@ const getAllOrganization = async (req: any, res: any,next:any) => {
   }
 }
 
-const deleteOrganization = async (req: any, res: any,next:any) => {
+const deleteOrganization = async (req: any, res: any, next: any) => {
   const id = req.id
   const orgId = req.params.id
   try {
@@ -122,7 +119,7 @@ const deleteOrganization = async (req: any, res: any,next:any) => {
   }
 }
 
-const updateOrganization = async (req: any, res: any,next:any) => {
+const updateOrganization = async (req: any, res: any, next: any) => {
   const orgId = req.params.id
   const { name } = req.body
   const id = req.id
@@ -163,7 +160,7 @@ const updateOrganization = async (req: any, res: any,next:any) => {
   }
 }
 
-const getOrganizationById = async (req: any, res: any,next:any) => {
+const getOrganizationById = async (req: any, res: any, next: any) => {
   const orgId = req.params.id
   const userId = req.id
 
@@ -201,11 +198,9 @@ const getOrganizationById = async (req: any, res: any,next:any) => {
   }
 }
 
-const sendInvitation = async (req: any, res: any,next:any) => {
-
-
+const sendInvitation = async (req: any, res: any, next: any) => {
   const { email } = req.body
-  const {orgId} = req.params
+  const { orgId } = req.params
   const userId = req.id
 
   if (!email) return res.status(401).json({ message: 'field required' })
@@ -231,11 +226,8 @@ const sendInvitation = async (req: any, res: any,next:any) => {
         .status(400)
         .json({ message: "you don't have access to send invitation link" })
 
-
-
     const rawToken = organizationService.generateInviteToken()
     const hashedToken = await organizationService.hashInviteToken(rawToken)
-
 
     const inviteLink = `${process.env.FRONTEND_URL}/accept-invite?token=${rawToken}&orgId=${organization.id}`
 
@@ -255,9 +247,7 @@ const sendInvitation = async (req: any, res: any,next:any) => {
       organization.organization_name
     )
 
-    return res
-      .status(200)
-      .json({ message: 'Invite sent successfully' })
+    return res.status(200).json({ message: 'Invite sent successfully' })
   } catch (err: any) {
     console.log(err)
     next(err)
@@ -265,13 +255,13 @@ const sendInvitation = async (req: any, res: any,next:any) => {
   }
 }
 
-const getMembersInOrganization = async (req: any, res: any,next:any) => {
+const getMembersInOrganization = async (req: any, res: any, next: any) => {
   const userId = req.id
-  const {orgId} = req.params
+  const { orgId } = req.params
 
-    if (!orgId || !isUUID(orgId)) {
-      return res.status(400).json({ message: 'Invalid organization ID' })
-    }
+  if (!orgId || !isUUID(orgId)) {
+    return res.status(400).json({ message: 'Invalid organization ID' })
+  }
 
   try {
     const orgMember = await orgUserRepo.find({
@@ -303,7 +293,7 @@ const getMembersInOrganization = async (req: any, res: any,next:any) => {
   }
 }
 
-const acceptOrganizationInvite = async (req: any, res: any, next:any) => {
+const acceptOrganizationInvite = async (req: any, res: any, next: any) => {
   const { token, orgId } = req.params
   const userId = req.id
 
@@ -319,7 +309,6 @@ const acceptOrganizationInvite = async (req: any, res: any, next:any) => {
       },
     })
     if (!user) return res.status(404).json({ message: 'user does not exist' })
-
 
     const keys = await client.keys(`org_invite:*`)
 
@@ -350,7 +339,6 @@ const acceptOrganizationInvite = async (req: any, res: any, next:any) => {
     if (!organization)
       return res.status(500).json({ message: 'no org available' })
 
-
     const existingMembership = await orgUserRepo.findOne({
       where: {
         user: { id: userId },
@@ -378,7 +366,7 @@ const acceptOrganizationInvite = async (req: any, res: any, next:any) => {
   }
 }
 
-const updateUserRole = async (req: any, res: any,next:any) => {
+const updateUserRole = async (req: any, res: any, next: any) => {
   const { targetUserId, orgId } = req.params
   const reqUserId = req.id
 
