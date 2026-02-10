@@ -1,6 +1,6 @@
 import axios from 'axios'
 import bcrypt from 'bcryptjs'
-import { OrganizationUser } from '../models/organization-user.entity'
+
 
 const sendInvite = async (
   email: string,

@@ -4,15 +4,11 @@ import { User } from '../models/user-model.entity'
 import authService from '../services/auth.service'
 import client from '../configs/redis.configs'
 import jwt from 'jsonwebtoken'
-import { validationResult } from 'express-validator'
 
 let userRepo = AppDataSource.getRepository(User)
 
 const handleSignup = async (req: any, res: any) => {
-  const errors = validationResult(req)
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() })
-  }
+
   const { username, email, password } = req.body
 
   try {
@@ -189,7 +185,7 @@ const resetPassword = async (req: any, res: any) => {
 
 const updateUser = async (req: any, res: any, next: any) => {
   const { email, password, username } = req.body
-  const userId = req.id
+  const userId = req.params.id
 
   try {
     let user: User | null = await userRepo.findOne({
@@ -214,7 +210,7 @@ const updateUser = async (req: any, res: any, next: any) => {
 }
 
 const handleLogout = async (req: any, res: any, next: any) => {
-  const userId = req.id
+  const userId = req.params.id
   try {
     const foundUser = await userRepo.findOne({
       where: {
@@ -237,7 +233,7 @@ const handleLogout = async (req: any, res: any, next: any) => {
 }
 
 const getCurrentUser = async (req: any, res: any, next: any) => {
-  const userId = req.id
+  const userId = req.params.id
   try {
     const user = await userRepo.findOne({
       where: {
@@ -256,7 +252,7 @@ const getCurrentUser = async (req: any, res: any, next: any) => {
 }
 
 const deleteAccount = async (req: any, res: any, next: any) => {
-  const userId = req.id
+  const userId = req.params.id
   try {
     const user = await userRepo.findOne({ where: { id: userId } })
     if (!user) return res.status(404).json({ message: 'User not found' })

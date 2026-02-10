@@ -2,134 +2,59 @@ import express from 'express'
 const routes = express.Router()
 import authController from '../controllers/AuthController'
 import verifyJwtMiddlewares from '../middlewares/verifyJwt.middlewares'
-import { body } from 'express-validator'
-import { validate } from 'uuid'
+import validate from '../middlewares/validation.middleware'
+import { deleteProfileSchema, forgotPasswordSchema, getProfileSchema, loginSchema, logoutSchema, registerSchema, resetPasswordSchema, updateUserSchema, verifyOtpSchema } from '../validation/schemas/user.schema'
+
 
 routes.post(
   '/register',
-  [
-    body('username').notEmpty().withMessage('Username is required').trim(),
-    body('email')
-      .notEmpty()
-      .withMessage('Email is required')
-      .isEmail()
-      .withMessage('Invalid email address')
-      .normalizeEmail()
-      .trim()
-      .withMessage('Invalid email address'),
-    body('password')
-      .isLength({ min: 10 })
-      .withMessage('Password must be at least 10 characters long'),
-  ],
-  validate,
+  validate(registerSchema),
   authController.handleSignup
 )
 
 routes.post(
   '/login',
-  [
-    body('email')
-      .notEmpty()
-      .withMessage('Email is required')
-      .isEmail()
-      .withMessage('Invalid email address')
-      .normalizeEmail()
-      .trim(),
-    body('password')
-      .notEmpty()
-      .withMessage('Password is required')
-      .isLength({ min: 10 })
-      .withMessage('Password must be atleast 10 characters long'),
-  ],
-  validate,
+  validate(loginSchema),
   authController.handleSignin
 )
 
 routes.post(
   '/forgot-password',
-  [
-    body('email')
-      .notEmpty()
-      .withMessage('Email is required')
-      .isEmail()
-      .withMessage('Invalid email address')
-      .normalizeEmail()
-      .trim(),
-  ],
-  validate,
+  validate(forgotPasswordSchema),
   authController.forgotPassword
 )
 
 routes.post(
   '/verify-otp',
-  [
-    body('email')
-      .notEmpty()
-      .withMessage('Email is required')
-      .isEmail()
-      .withMessage('Invalid email address')
-      .normalizeEmail()
-      .trim(),
-    body('otp')
-      .notEmpty()
-      .withMessage('Otp code is required')
-      .isLength({ min: 6 }),
-  ],
-  validate,
+  validate(verifyOtpSchema),
   authController.verifyOtp
 )
 
 routes.post(
   '/reset-password',
-  [
-    body('email')
-      .notEmpty()
-      .withMessage('Email is required')
-      .isEmail()
-      .withMessage('Invalid email')
-      .normalizeEmail()
-      .trim(),
-
-    body('password')
-      .notEmpty()
-      .withMessage('Password is required')
-      .isLength({ min: 10 })
-      .withMessage('Password must be atleast 10 characters long').trim(),
-  ],
-  validate,
+  validate(resetPasswordSchema),
   authController.resetPassword
 )
 
-routes.post(
-  '/update-info',
-  [
-    body('email')
-      .notEmpty()
-      .withMessage('Email is required')
-      .isEmail()
-      .withMessage('Invalid email')
-      .normalizeEmail()
-      .trim(),
-    body('password')
-      .notEmpty()
-      .withMessage('Password is required')
-      .isLength({ min: 10 })
-      .withMessage('Password must be atleast 10 characters long')
-      .trim()
-      ,
-    body('username').notEmpty().withMessage('username is require'),
-  ],
-  validate,
+routes.put(
+  '/update/:id',
+  validate(updateUserSchema),
   authController.updateUser
 )
 
-routes.post('/logout', authController.handleLogout)
+routes.post('/logout/:id',validate(logoutSchema), authController.handleLogout)
 
-routes.get('/me', verifyJwtMiddlewares.verifyJwt, authController.getCurrentUser)
+routes.get(
+  '/:id',
+  verifyJwtMiddlewares.verifyJwt,
+  validate(getProfileSchema),
+  authController.getCurrentUser
+)
 
 routes.delete(
   '/:id',
   verifyJwtMiddlewares.verifyJwt,
+  validate(deleteProfileSchema),
   authController.deleteAccount
 )
 
