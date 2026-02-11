@@ -15,8 +15,7 @@ const logTagRepo = AppDataSource.getRepository(LogTag)
 const apiKeyRepo = AppDataSource.getRepository(ApiKey)
 
 const createManualLogs = async (req: any, res: any) => {
-  const userId = req.id
-  const { orgId, serviceId } = req.params
+  const { userId, orgId, serviceId } = req.params
   const { logMessage, logStatus, logTagName } = req.body
 
   try {
@@ -90,8 +89,8 @@ const createManualLogs = async (req: any, res: any) => {
 }
 
 const getAllManualLogs = async (req: any, res: any) => {
-  const userId = req.id
-  const { orgId, serviceId } = req.params
+
+  const {userId, orgId, serviceId } = req.params
 
   try {
     const orgUser = await orgUserRepo.findOne({

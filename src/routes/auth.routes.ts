@@ -13,7 +13,7 @@ routes.post(
 )
 
 routes.post(
-  '/login',
+  '/signin',
   validate(loginSchema),
   authController.handleSignin
 )
@@ -37,25 +37,29 @@ routes.post(
 )
 
 routes.put(
-  '/update/:id',
+  '/update',
   validate(updateUserSchema),
   authController.updateUser
 )
 
-routes.post('/logout/:id',validate(logoutSchema), authController.handleLogout)
+routes.post('/logout',validate(logoutSchema), authController.handleLogout)
 
 routes.get(
-  '/:id',
+  '/me',
   verifyJwtMiddlewares.verifyJwt,
   validate(getProfileSchema),
   authController.getCurrentUser
 )
 
 routes.delete(
-  '/:id',
+  '/delete-account',
   verifyJwtMiddlewares.verifyJwt,
   validate(deleteProfileSchema),
   authController.deleteAccount
 )
+
+
+
+
 
 export default routes

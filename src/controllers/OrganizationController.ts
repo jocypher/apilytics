@@ -31,7 +31,6 @@ const createOrganization = async (req: any, res: any, next: any) => {
       created_by: user,
     })
 
-    // save the organization to the db
     await orgRepo.save(organizationCreated)
 
     let organizationUser = orgUserRepo.create({

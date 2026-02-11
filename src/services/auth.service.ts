@@ -3,7 +3,6 @@ import crypto from 'crypto'
 import bcrypt from 'bcryptjs'
 import client from '../configs/redis.configs'
 
-// generate otp code for system
 const generateOTPCode = (): string => {
   const min = 1000
   const max = 9999
@@ -11,7 +10,7 @@ const generateOTPCode = (): string => {
   return otpcode.toString()
 }
 
-// send email  for forgot password
+
 const sendForgotEmail = async (email: string, message: string, username: string) => {
   try {
     const response = await axios.post(

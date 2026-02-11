@@ -8,7 +8,6 @@ import jwt from 'jsonwebtoken'
 let userRepo = AppDataSource.getRepository(User)
 
 const handleSignup = async (req: any, res: any) => {
-
   const { username, email, password } = req.body
 
   try {
@@ -23,7 +22,7 @@ const handleSignup = async (req: any, res: any) => {
     await userRepo.save(user)
     return res
       .status(201)
-      .json({ message: 'user account created', email: email })
+      .json({ message: 'user account created', email: email, id: user.id})
   } catch (err: any) {
     console.log(err)
     return res.status(500).json({ message: err.message })
@@ -47,7 +46,7 @@ const handleSignin = async (req: any, res: any) => {
     )
     console.log(isPasswordAccurate)
     if (!isPasswordAccurate) {
-      return res.status(401).send('password is inaccurate')
+      return res.status(401).json({ 'Credential Error': 'Invalid credentials' })
     }
     const token: string = jwt.sign(
       {
@@ -57,13 +56,16 @@ const handleSignin = async (req: any, res: any) => {
       process.env.JWT_SECRET_KEY!,
       { algorithm: 'HS256', expiresIn: '24h' }
     )
+    console.log('JWT SECRET:', process.env.JWT_SECRET_KEY)
+
 
     await client.set(`auth:${user.id}`, token, { EX: 3600 })
 
     return res.status(200).json({
       message: 'Logged in successfully',
+      id: user.id,
       email: user.email,
-      jwt_token: token,
+      jwt_token: token
     })
   } catch (err) {
     console.error(err)
@@ -185,7 +187,7 @@ const resetPassword = async (req: any, res: any) => {
 
 const updateUser = async (req: any, res: any, next: any) => {
   const { email, password, username } = req.body
-  const userId = req.params.id
+  const userId = req.id
 
   try {
     let user: User | null = await userRepo.findOne({
@@ -210,7 +212,7 @@ const updateUser = async (req: any, res: any, next: any) => {
 }
 
 const handleLogout = async (req: any, res: any, next: any) => {
-  const userId = req.params.id
+  const userId = req.id
   try {
     const foundUser = await userRepo.findOne({
       where: {
@@ -233,7 +235,7 @@ const handleLogout = async (req: any, res: any, next: any) => {
 }
 
 const getCurrentUser = async (req: any, res: any, next: any) => {
-  const userId = req.params.id
+  const userId = req.id
   try {
     const user = await userRepo.findOne({
       where: {
