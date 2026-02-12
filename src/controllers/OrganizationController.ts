@@ -5,7 +5,6 @@ import { OrganizationUser } from '../models/organization-user.entity'
 import organizationService from '../services/organization.service'
 import client from '../configs/redis.configs'
 import bcrypt from 'bcryptjs'
-import { validate as isUUID } from 'uuid'
 import sharedUtils from '../validation/utils/shared.utils'
 
 const userRepo = AppDataSource.getRepository(User)
@@ -122,10 +121,6 @@ const updateOrganization = async (req: any, res: any, next: any) => {
   const orgId = req.params.id
   const { name } = req.body
   const id = req.id
-
-  if (!orgId) return res.status(400).json({ message: 'Invalid id' })
-  if (!name) return res.status(400).json({ message: 'Bad request' })
-
   try {
     const org = await orgRepo.findOne({
       where: {
@@ -163,10 +158,6 @@ const getOrganizationById = async (req: any, res: any, next: any) => {
   const orgId = req.params.id
   const userId = req.id
 
-  if (!orgId)
-    return res
-      .status(404)
-      .json({ message: `organization with id: ${orgId} not found` })
   try {
     const membership = await orgUserRepo.findOne({
       where: {
@@ -202,7 +193,6 @@ const sendInvitation = async (req: any, res: any, next: any) => {
   const { orgId } = req.params
   const userId = req.id
 
-  if (!email) return res.status(401).json({ message: 'field required' })
   try {
     const organization = await orgRepo.findOne({
       where: {
@@ -258,10 +248,6 @@ const getMembersInOrganization = async (req: any, res: any, next: any) => {
   const userId = req.id
   const { orgId } = req.params
 
-  if (!orgId || !isUUID(orgId)) {
-    return res.status(400).json({ message: 'Invalid organization ID' })
-  }
-
   try {
     const orgMember = await orgUserRepo.find({
       where: {
@@ -295,11 +281,6 @@ const getMembersInOrganization = async (req: any, res: any, next: any) => {
 const acceptOrganizationInvite = async (req: any, res: any, next: any) => {
   const { token, orgId } = req.params
   const userId = req.id
-
-  if (!userId) return res.status(400).json({ message: 'id not found' })
-
-  if (!token || !orgId)
-    return res.status(400).json({ message: 'token and org id invalid' })
 
   try {
     const user = await userRepo.findOne({
@@ -369,8 +350,6 @@ const updateUserRole = async (req: any, res: any, next: any) => {
   const { targetUserId, orgId } = req.params
   const reqUserId = req.id
 
-  if (!targetUserId || !orgId)
-    return res.status(400).json({ message: 'Missing required parameters' })
   try {
     let existingMembership = await orgUserRepo.findOne({
       where: {

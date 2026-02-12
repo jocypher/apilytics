@@ -1,6 +1,10 @@
 import Joi from 'joi'
 
-
+export const userIdSchema = Joi.object({
+  userId: Joi.string().required().messages({
+    'string.empty':'User id required'
+  })
+})
 export const userBaseSchema = {
   username: Joi.string()
     .alphanum()

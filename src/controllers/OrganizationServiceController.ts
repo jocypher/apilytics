@@ -11,7 +11,7 @@ const serviceRepo = AppDataSource.getRepository(SubComponent)
 const serviceUserRepo = AppDataSource.getRepository(SubComponentUser)
 const userRepo = AppDataSource.getRepository(User)
 const apiKeyRepo = AppDataSource.getRepository(ApiKey)
-// service controller
+
 const createService = async (req: any, res: any, next: any) => {
   const userId = req.id
   const { orgId } = req.params
@@ -125,7 +125,7 @@ const assignUserToService = async (req: any, res: any, next: any) => {
   }
 }
 
-// delete the service
+
 const deleteService = async (req: any, res: any, next: any) => {
   const userId = req.id
   const { orgId, svcId } = req.params
@@ -165,7 +165,6 @@ const deleteService = async (req: any, res: any, next: any) => {
   }
 }
 
-// get service by id
 const getServiceById = async (req: any, res: any, next: any) => {
   const requesterId = req.id
   const { svcId, orgId } = req.params
@@ -201,8 +200,6 @@ const getServiceById = async (req: any, res: any, next: any) => {
   }
 }
 
-// get the assigned users for this service
-// include pagination and limit
 const getAssignedUserForService = async (req: any, res: any, next: any) => {
   const userId = req.id
   const { orgId, svcId } = req.params
@@ -265,12 +262,6 @@ const getAssignedUserForService = async (req: any, res: any, next: any) => {
   }
 }
 
-// brain teaser
-// 1. A company has created an org , created a service in the table , now what is left is how to get the logs
-// Now with the automated logs .
-// We need an api that connects to the appl ,
-// so they need to request for an api key
-// however we need to confirm their details
 
 const generateApiKey = async (req: any, res: any, next: any) => {
   const userId = req.id
@@ -299,7 +290,7 @@ const generateApiKey = async (req: any, res: any, next: any) => {
     })
     if (!service) return res.status(404).json({ message: 'service not found' })
     if (!sharedUtils.isOrgAdminOrOwner(orgUser))
-      return res.status(400).json({ message: 'Unauthorized' })
+      return res.status(401).json({ message: 'Unauthorized' })
     const option = {
       username: foundUser.username,
       organizationName: orgUser.organization.organization_name,

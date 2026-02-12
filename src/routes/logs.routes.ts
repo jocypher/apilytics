@@ -2,32 +2,33 @@ import express from 'express'
 import logsController from '../controllers/LogController'
 import verifyJwtMiddlewares from '../middlewares/verifyJwt.middlewares'
 import { verifyApiKey } from '../middlewares/verifyApi.middlewares'
-import { validate } from 'uuid'
 import { body } from 'express-validator'
+import { createManualLogsSchema, ingestLogsSchema } from '../validation/schemas/log.schema'
+import validate from '../middlewares/validation.middleware'
+import { userIdSchema } from '../validation/schemas/user.schema'
+import { organizationIdSchema } from '../validation/schemas/organization.schema'
+import { serviceIdSchema } from '../validation/schemas/service.schema'
 const routes = express.Router()
 
 routes.post(
   '/:orgId/service/:serviceId/logs/manual',
-  [
-    body('logMessage').notEmpty().withMessage('Log message required').trim(),
-    body('logStatus').notEmpty().withMessage('Log status is required').trim(),
-    body('tag name').notEmpty().withMessage('Tag name is required').trim(),
-  ],
-  validate,
   verifyJwtMiddlewares.verifyJwt,
+  validate(createManualLogsSchema),
   logsController.createManualLogs
 )
 
 routes.get(
   '/:orgId/service/:serviceId/logs/manual',
   verifyJwtMiddlewares.verifyJwt,
+  validate(userIdSchema),
+  validate(organizationIdSchema),
+  validate(serviceIdSchema),
   logsController.getAllManualLogs
 )
 
 routes.post(
   '/logs/ingest',
-  [body('message').notEmpty().withMessage('log message is required').trim()],
-  validate,
+  validate(ingestLogsSchema),
   verifyApiKey,
   logsController.ingestLogs
 )
