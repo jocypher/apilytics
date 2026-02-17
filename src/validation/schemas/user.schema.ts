@@ -42,7 +42,7 @@ export const forgotPasswordSchema = Joi.object({
 })
 
 export const verifyOtpSchema = Joi.object({
-  otp: Joi.string().required(),
+  otp: Joi.string().required().max(4),
   email: Joi.string()
     .email()
     .message('must be a valid email address')

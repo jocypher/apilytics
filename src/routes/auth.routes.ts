@@ -42,12 +42,11 @@ routes.put(
   authController.updateUser
 )
 
-routes.post('/logout',validate(logoutSchema), authController.handleLogout)
+routes.post('/logout',authController.handleLogout)
 
 routes.get(
   '/me',
   verifyJwtMiddlewares.verifyJwt,
-  validate(getProfileSchema),
   authController.getCurrentUser
 )
 

@@ -10,6 +10,7 @@ let userRepo = AppDataSource.getRepository(User)
 const handleSignup = async (req: any, res: any) => {
   const { username, email, password } = req.body
 
+  
   try {
     const hashedPassword = await bcrypt.hash(password, 10)
 
@@ -54,9 +55,8 @@ const handleSignin = async (req: any, res: any) => {
         email: user.email,
       },
       process.env.JWT_SECRET_KEY!,
-      { algorithm: 'HS256', expiresIn: '24h' }
+      { expiresIn: '600s' }
     )
-    console.log('JWT SECRET:', process.env.JWT_SECRET_KEY)
 
     await client.set(`auth:${user.id}`, token, { EX: 3600 })
 
@@ -201,12 +201,10 @@ const updateUser = async (req: any, res: any, next: any) => {
     if (!isNaN(username)) user.username = username
 
     await userRepo.save(user)
-
     return res.status(200).json({ message: 'update made successfully' })
   } catch (err: any) {
     console.error(err)
     next(err)
-    return res.status(500).json({ message: err.message })
   }
 }
 
@@ -218,10 +216,10 @@ const handleLogout = async (req: any, res: any, next: any) => {
         id: userId,
       },
     })
-    if (!foundUser) return res.status(404).jsoon({ message: 'user not found' })
 
-    let token = await client.get(`auth:${userId}`)
-    if (!token) return res.status(400).json({ message: 'Unauthorized' })
+    if (!foundUser) return res.status(404).json({ message: 'user not found' })
+    let token = await client.get(`auth:${foundUser.id}`)
+    if (!token) return res.status(401).json({ message: 'Unauthorized' })
 
     await client.del(`auth:${userId}`)
 
@@ -229,7 +227,6 @@ const handleLogout = async (req: any, res: any, next: any) => {
   } catch (err: any) {
     console.log(err)
     next(err)
-    res.status(500).json({ message: err.message })
   }
 }
 
@@ -241,24 +238,26 @@ const getCurrentUser = async (req: any, res: any, next: any) => {
         id: userId,
       },
     })
-    if (!user) return res.status(404).json({ messae: 'user not found' })
-
-    return res.status(200).json(user)
+    if (!user) return res.status(404).json({ message: 'user not found' })
+    let userResult: Partial<User> = {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      created_at: user.created_at,
+    }
+    return res.status(200).json(userResult)
   } catch (err: any) {
     next(err)
-    return res
-      .status(500)
-      .json({ message: err.message || 'Internal Server Error' })
   }
 }
 
 const deleteAccount = async (req: any, res: any, next: any) => {
-  const userId = req.params.id
+  const userId = req.id
   try {
     const user = await userRepo.findOne({ where: { id: userId } })
     if (!user) return res.status(404).json({ message: 'User not found' })
     let token = await client.get(`auth:${userId}`)
-    if (!token) return res.status(400).json({ message: 'Unauthorized' })
+    if (!token) return res.status(401).json({ message: 'Unauthorized' })
 
     await client.del(`auth:${userId}`)
     await userRepo.delete({

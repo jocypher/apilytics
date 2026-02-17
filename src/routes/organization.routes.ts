@@ -1,20 +1,29 @@
 import express from 'express'
 import verifyJwtMiddlewares from '../middlewares/verifyJwt.middlewares'
 import organizationController from '../controllers/OrganizationController'
+import validate from '../middlewares/validation.middleware'
+import { acceptOrganizationTokenSchema, createOrgSchema, deleteOrganizationSchema, sendInvitationSchema, updateOrgSchema } from '../validation/schemas/organization.schema'
+
 
 const routes = express.Router()
 
 routes.post(
   '/create-org',
   verifyJwtMiddlewares.verifyJwt,
+  validate(createOrgSchema),
   organizationController.createOrganization
 )
 
-routes.post('/accept-invite', organizationController.acceptOrganizationInvite)
+routes.post(
+  '/accept-invite/:userId',
+  validate(acceptOrganizationTokenSchema),
+  organizationController.acceptOrganizationInvite
+)
 
 routes.put(
-  '/update-role/:targetUserId/:orgId',
+  '/update-role/:orgId/:targetUserId',
   verifyJwtMiddlewares.verifyJwt,
+  validate(updateOrgSchema),
   organizationController.updateUserRole
 )
 
@@ -27,18 +36,21 @@ routes.get(
 routes.post(
   '/:orgId/sendInvite',
   verifyJwtMiddlewares.verifyJwt,
+  validate(sendInvitationSchema),
   organizationController.sendInvitation
 )
 
 routes.put(
   '/:id',
   verifyJwtMiddlewares.verifyJwt,
+  validate(updateOrgSchema),
   organizationController.updateOrganization
 )
 
 routes.delete(
   '/:id',
   verifyJwtMiddlewares.verifyJwt,
+  validate(deleteOrganizationSchema),
   organizationController.deleteOrganization
 )
 

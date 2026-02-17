@@ -6,6 +6,7 @@ import organizationService from '../services/organization.service'
 import client from '../configs/redis.configs'
 import bcrypt from 'bcryptjs'
 import sharedUtils from '../validation/utils/shared.utils'
+import { raw } from 'express'
 
 const userRepo = AppDataSource.getRepository(User)
 const orgRepo = AppDataSource.getRepository(Organization)
@@ -216,8 +217,8 @@ const sendInvitation = async (req: any, res: any, next: any) => {
         .json({ message: "you don't have access to send invitation link" })
 
     const rawToken = organizationService.generateInviteToken()
+    console.log(rawToken)
     const hashedToken = await organizationService.hashInviteToken(rawToken)
-
     const inviteLink = `${process.env.FRONTEND_URL}/accept-invite?token=${rawToken}&orgId=${organization.id}`
 
     await client.set(
@@ -240,7 +241,6 @@ const sendInvitation = async (req: any, res: any, next: any) => {
   } catch (err: any) {
     console.log(err)
     next(err)
-    return res.status(500).json({ error: err.message })
   }
 }
 
@@ -279,8 +279,9 @@ const getMembersInOrganization = async (req: any, res: any, next: any) => {
 }
 
 const acceptOrganizationInvite = async (req: any, res: any, next: any) => {
-  const { token, orgId } = req.params
-  const userId = req.id
+  const { token, orgId } = req.query
+  const {userId} = req.params
+  const id = req.id
 
   try {
     const user = await userRepo.findOne({
@@ -288,6 +289,7 @@ const acceptOrganizationInvite = async (req: any, res: any, next: any) => {
         id: userId,
       },
     })
+    console.log(user)
     if (!user) return res.status(404).json({ message: 'user does not exist' })
 
     const keys = await client.keys(`org_invite:*`)
@@ -326,9 +328,9 @@ const acceptOrganizationInvite = async (req: any, res: any, next: any) => {
       },
       relations: ['user', 'organization'],
     })
-    if (existingMembership)
+    if (existingMembership != null)
       return res
-        .status(400)
+        .status(401)
         .json({ message: 'User already a member of the organization' })
 
     const orgUser = orgUserRepo.create({
@@ -337,9 +339,11 @@ const acceptOrganizationInvite = async (req: any, res: any, next: any) => {
       organization: organization,
       role: 'member',
       invite_status: 'accepted',
+      invited_by_user_id: id
     })
 
     await orgUserRepo.save(orgUser)
+    return res.status(200).json({message:"User accepted to organization"})
   } catch (err: any) {
     next(err)
     return res.status(500).json({ message: err.message })
