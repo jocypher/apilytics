@@ -15,25 +15,12 @@ const logTagRepo = AppDataSource.getRepository(LogTag)
 const apiKeyRepo = AppDataSource.getRepository(ApiKey)
 
 const createManualLogs = async (req: any, res: any) => {
-  const { userId, orgId, serviceId } = req.params
+  const userId = req.id
+  const { orgId, serviceId } = req.params
   const { logMessage, logStatus, logTagName } = req.body
 
   try {
-    let tag = await logTagRepo.findOne({
-      where: {
-        tag_name: logTagName,
-      },
-    })
-
-    if (!tag) {
-      tag = logTagRepo.create({
-        tag_name: logTagName,
-        description: '',
-        organization_id: orgId,
-        logs: [],
-      })
-      await logTagRepo.save(tag)
-    }
+   
 
     const orgUser = await orgUserRepo.findOne({
       where: {
@@ -71,6 +58,22 @@ const createManualLogs = async (req: any, res: any) => {
       return res
         .status(401)
         .json({ message: "The organization with the service isn't available" })
+
+    let tag = await logTagRepo.findOne({
+           where: {
+             tag_name: logTagName,
+             organization_id: orgId,
+           },
+         })
+
+         if (!tag) {
+           tag = logTagRepo.create({
+             tag_name: logTagName,
+             description: '',
+             organization_id: orgId,
+           })
+           await logTagRepo.save(tag)
+         }
 
     const createManualLogs = logRepo.create({
       message: logMessage,

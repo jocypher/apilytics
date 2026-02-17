@@ -6,7 +6,6 @@ import organizationService from '../services/organization.service'
 import client from '../configs/redis.configs'
 import bcrypt from 'bcryptjs'
 import sharedUtils from '../validation/utils/shared.utils'
-import { raw } from 'express'
 
 const userRepo = AppDataSource.getRepository(User)
 const orgRepo = AppDataSource.getRepository(Organization)
@@ -249,7 +248,7 @@ const getMembersInOrganization = async (req: any, res: any, next: any) => {
   const { orgId } = req.params
 
   try {
-    const orgMember = await orgUserRepo.find({
+    const requester = await orgUserRepo.findOne({
       where: {
         user: { id: userId },
         organization: { id: orgId },
@@ -257,7 +256,7 @@ const getMembersInOrganization = async (req: any, res: any, next: any) => {
       relations: ['user', 'organization'],
     })
 
-    if (!orgMember) {
+    if (!sharedUtils.isOrgAdminOrOwner(requester)) {
       return res
         .status(403)
         .json({ message: 'Not a member of this organization' })
@@ -269,9 +268,16 @@ const getMembersInOrganization = async (req: any, res: any, next: any) => {
       },
       relations: ['user'],
     })
-
-    console.log(members)
-    return res.status(200).json(members)
+   let result =  members.map(member=> {
+    return {
+      name: member.display_name,
+      role: member.role,
+      email: member.user.email,
+      invite_status: member.invite_status,
+      joined_at: member.joined_at,
+    }
+    })
+    return res.status(200).json(result)
   } catch (err: any) {
     next(err)
     return res.status(500).json({ message: err.message })
@@ -382,6 +388,9 @@ const updateUserRole = async (req: any, res: any, next: any) => {
     return res.status(500).json({ message: `Server error ${err}` })
   }
 }
+const getOrganizationsUserIsIn = async(rq: any, rs:any, next:any) =>{
+
+}
 
 export default {
   createOrganization,
@@ -393,4 +402,5 @@ export default {
   acceptOrganizationInvite,
   getOrganizationById,
   updateUserRole,
+  getOrganizationsUserIsIn
 }
