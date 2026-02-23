@@ -4,14 +4,33 @@ import { User } from '../models/user-model.entity'
 import authService from '../services/auth.service'
 import client from '../configs/redis.configs'
 import jwt from 'jsonwebtoken'
-
+import normalizeEmail from 'normalize-email'
 let userRepo = AppDataSource.getRepository(User)
 
 const handleSignup = async (req: any, res: any) => {
   const { username, email, password } = req.body
 
-  
   try {
+    let validEmail = normalizeEmail(email)
+
+    const foundUser = await userRepo.findOne({
+      where: [
+        {
+          email: validEmail,
+          username: username,
+        },
+      ],
+      select: {
+        id: true,
+        username: true,
+        email: true,
+      },
+    })
+
+    if (foundUser) {
+      return res.status(400).json({ message: 'user already exist' })
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10)
 
     let user = userRepo.create({
@@ -38,8 +57,13 @@ const handleSignin = async (req: any, res: any) => {
       where: {
         email: email,
       },
+      select: {
+        id: true,
+        password_hash: true,
+      },
     })
-    if (!user) return res.status(404).json({ message: 'user not found' })
+    console.log(user)
+    if (!user) return res.status(401).json({ message: 'Bad credentials' })
 
     let isPasswordAccurate: boolean = await bcrypt.compare(
       password,
@@ -49,21 +73,22 @@ const handleSignin = async (req: any, res: any) => {
     if (!isPasswordAccurate) {
       return res.status(401).json({ 'Credential Error': 'Invalid credentials' })
     }
+
     const token: string = jwt.sign(
       {
         id: user.id,
-        email: user.email,
+        email: email,
       },
       process.env.JWT_SECRET_KEY!,
-      { expiresIn: '600s' }
+      { expiresIn: Number(process.env.TOKEN_EXP) }
     )
 
-    await client.set(`auth:${user.id}`, token, { EX: 3600 })
+    await client.set(`auth:${user.id}`, token, {
+      EX: Number(process.env.TOKEN_EXP),
+    })
 
     return res.status(200).json({
-      message: 'Logged in successfully',
       id: user.id,
-      email: user.email,
       jwt_token: token,
     })
   } catch (err) {
