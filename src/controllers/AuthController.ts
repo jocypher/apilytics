@@ -7,7 +7,7 @@ import jwt from 'jsonwebtoken'
 import normalizeEmail from 'normalize-email'
 let userRepo = AppDataSource.getRepository(User)
 
-const handleSignup = async (req: any, res: any) => {
+const handleSignup = async (req: any, res: any, next:any) => {
   const { username, email, password } = req.body
 
   try {
@@ -35,21 +35,20 @@ const handleSignup = async (req: any, res: any) => {
 
     let user = userRepo.create({
       username: username,
-      email: email,
+      email: validEmail,
       password_hash: hashedPassword,
     })
 
     await userRepo.save(user)
     return res
       .status(201)
-      .json({ message: 'user account created', email: email, id: user.id })
+      .json({ message: 'user account created', email: validEmail, id: user.id })
   } catch (err: any) {
-    console.log(err)
-    return res.status(500).json({ message: err.message })
+    next(err)
   }
 }
 
-const handleSignin = async (req: any, res: any) => {
+const handleSignin = async (req: any, res: any, next:any) => {
   let { email, password } = req.body
 
   try {
@@ -62,8 +61,10 @@ const handleSignin = async (req: any, res: any) => {
         password_hash: true,
       },
     })
-    console.log(user)
-    if (!user) return res.status(401).json({ message: 'Bad credentials' })
+ 
+    if (!user) {
+      return res.status(401).json({ message: 'Bad credentials' })
+    }
 
     let isPasswordAccurate: boolean = await bcrypt.compare(
       password,
@@ -92,28 +93,28 @@ const handleSignin = async (req: any, res: any) => {
       jwt_token: token,
     })
   } catch (err) {
-    console.error(err)
-    res.status(500).send(err)
+    next(err)
+    
   }
 }
 
 const forgotPassword = async (req: any, res: any) => {
   const { email } = req.body
   try {
-    const rateLimitKey: string = `rate:forgot:${email}`
-    let attempts: string | null = await client.get(rateLimitKey)
+    // const rateLimitKey: string = `rate:forgot:${email}`
+    // let attempts: string | null = await client.get(rateLimitKey)
 
-    if (attempts && isNaN(Number(attempts))) {
-      await client.del(rateLimitKey)
-      attempts = null
-    }
+    // if (attempts && isNaN(Number(attempts))) {
+    //   await client.del(rateLimitKey)
+    //   attempts = null
+    // }
 
-    if (attempts && Number(attempts) >= 3) {
-      return res.status(429).json({
-        message: 'Too many requests',
-        retryAfter: '1 hour',
-      })
-    }
+    // if (attempts && Number(attempts) >= 3) {
+    //   return res.status(429).json({
+    //     message: 'Too many requests',
+    //     retryAfter: '1 hour',
+    //   })
+    // }
 
     let user: User | null = await userRepo.findOne({
       where: {
@@ -130,13 +131,13 @@ const forgotPassword = async (req: any, res: any) => {
       EX: 120,
     })
 
-    if (attempts) {
-      await client.incr(rateLimitKey)
-    } else {
-      await client.set(rateLimitKey, '1', {
-        EX: 3600,
-      })
-    }
+    // if (attempts) {
+    //   await client.incr(rateLimitKey)
+    // } else {
+    //   await client.set(rateLimitKey, '1', {
+    //     EX: 3600,
+    //   })
+    // }
 
     await authService.sendForgotEmail(email, otp, user.username)
 
@@ -168,8 +169,11 @@ const verifyOtp = async (req: any, res: any) => {
       EX: 300,
     })
     return res.status(200).json({ message: 'otp verified' })
-  } catch (err) {
-    return res.status(500).json({ message: err })
+  } catch (err:any) {
+     return res.status(500).json({
+    success: false,
+    message: "OTP verification failed",
+  })
   }
 }
 
@@ -182,7 +186,7 @@ const resetPassword = async (req: any, res: any) => {
     )
 
     if (!storeResetPasswordToken)
-      return res.status(400).json({ message: 'Reset tokenn expired' })
+      return res.status(400).json({ message: 'Reset token expired' })
 
     const user = await userRepo.findOne({
       where: {
@@ -232,6 +236,13 @@ const updateUser = async (req: any, res: any, next: any) => {
     next(err)
   }
 }
+
+// const updateUserPassword = async(req:any, res:any, next:any)=>{
+//   const {oldPassword, newPassword, confirmPassword} = req.body
+//   try{
+
+//   }
+// }
 
 const handleLogout = async (req: any, res: any, next: any) => {
   const userId = req.id
