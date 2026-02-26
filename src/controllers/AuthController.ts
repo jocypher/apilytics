@@ -5,21 +5,22 @@ import authService from '../services/auth.service'
 import client from '../configs/redis.configs'
 import jwt from 'jsonwebtoken'
 import normalizeEmail from 'normalize-email'
+import { Request, Response, NextFunction } from 'express'
+
 let userRepo = AppDataSource.getRepository(User)
 
-const handleSignup = async (req: any, res: any, next:any) => {
+const handleSignup = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { username, email, password } = req.body
 
   try {
     let validEmail = normalizeEmail(email)
 
     const foundUser = await userRepo.findOne({
-      where: [
-        {
-          email: validEmail,
-          username: username,
-        },
-      ],
+      where: [{ email: validEmail }, { username: username }],
       select: {
         id: true,
         username: true,
@@ -48,20 +49,24 @@ const handleSignup = async (req: any, res: any, next:any) => {
   }
 }
 
-const handleSignin = async (req: any, res: any, next:any) => {
+const handleSignin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   let { email, password } = req.body
-
+  const normalizedEmail = normalizeEmail(email)
   try {
     let user = await userRepo.findOne({
       where: {
-        email: email,
+        email: normalizedEmail,
       },
       select: {
         id: true,
         password_hash: true,
       },
     })
- 
+
     if (!user) {
       return res.status(401).json({ message: 'Bad credentials' })
     }
@@ -78,7 +83,7 @@ const handleSignin = async (req: any, res: any, next:any) => {
     const token: string = jwt.sign(
       {
         id: user.id,
-        email: email,
+        email: normalizedEmail,
       },
       process.env.JWT_SECRET_KEY!,
       { expiresIn: Number(process.env.TOKEN_EXP) }
@@ -94,11 +99,14 @@ const handleSignin = async (req: any, res: any, next:any) => {
     })
   } catch (err) {
     next(err)
-    
   }
 }
 
-const forgotPassword = async (req: any, res: any) => {
+const forgotPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { email } = req.body
   try {
     // const rateLimitKey: string = `rate:forgot:${email}`
@@ -121,14 +129,17 @@ const forgotPassword = async (req: any, res: any) => {
         email: email,
       },
     })
-    if (!user) return res.status(404).json({ message: 'user not found' })
+    if (!user) {
+      return res.status(404).json({ message: 'user not found' })
+    }
 
+    // TODO: move to email service
     const otp: string = authService.generateOTPCode()
 
     const hashedOtp: string = await authService.storeHashedOtpCode(otp)
 
     await client.set(`otp:${email}`, hashedOtp, {
-      EX: 120,
+      EX: Number(process.env.OTP_EXP),
     })
 
     // if (attempts) {
@@ -139,6 +150,7 @@ const forgotPassword = async (req: any, res: any) => {
     //   })
     // }
 
+    // TODO: MOVE THIS TO `email service`
     await authService.sendForgotEmail(email, otp, user.username)
 
     return res.status(200).json({
@@ -146,22 +158,24 @@ const forgotPassword = async (req: any, res: any) => {
       expiresIn: 'expires in 2 minutes',
     })
   } catch (err: any) {
-    console.log(err)
-    return res.status(500).json({ message: err.message })
+    next(err)
   }
 }
 
-const verifyOtp = async (req: any, res: any) => {
+const verifyOtp = async (req: Request, res: Response, next: NextFunction) => {
   const { otp, email } = req.body
   try {
     const storeHashedOtpCode: string | null = await client.get(`otp:${email}`)
 
-    if (!storeHashedOtpCode)
-      return res.status(400).send('OTP expired or not found')
+    if (!storeHashedOtpCode) {
+      return res.status(401).send('OTP expired')
+    }
 
     const isValid: boolean = await bcrypt.compare(otp, storeHashedOtpCode)
 
-    if (!isValid) return res.status(401).send('Invalid otp')
+    if (!isValid) {
+      return res.status(401).send('Invalid otp')
+    }
 
     await client.del(`otp:${email}`)
 
@@ -169,15 +183,16 @@ const verifyOtp = async (req: any, res: any) => {
       EX: 300,
     })
     return res.status(200).json({ message: 'otp verified' })
-  } catch (err:any) {
-     return res.status(500).json({
-    success: false,
-    message: "OTP verification failed",
-  })
+  } catch (err: any) {
+    next(err)
   }
 }
 
-const resetPassword = async (req: any, res: any) => {
+const resetPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { email, newPassword } = req.body
 
   try {
@@ -185,77 +200,134 @@ const resetPassword = async (req: any, res: any) => {
       `reset:password:${email}`
     )
 
-    if (!storeResetPasswordToken)
+    if (!storeResetPasswordToken) {
       return res.status(400).json({ message: 'Reset token expired' })
+    }
 
     const user = await userRepo.findOne({
       where: {
         email: email,
       },
+      select: {
+        id: true,
+        password_hash: true,
+      },
     })
 
-    if (!user)
+    if (!user?.id) {
       return res
-        .status(400)
+        .status(401)
         .json({ message: `user with email: ${email} not found` })
+    }
 
     const hashedPassword: string = await bcrypt.hash(newPassword, 10)
 
-    user.password_hash = hashedPassword
-    await userRepo.save(user)
+    await userRepo.update(user.id, { password_hash: hashedPassword })
     await client.del(`reset:password:${email}`)
 
     return res.status(200).json({
       message: 'reset password successful',
     })
   } catch (err) {
-    return res.status(500).json({ message: err })
-  }
-}
-
-const updateUser = async (req: any, res: any, next: any) => {
-  const { email, password, username } = req.body
-  const userId = req.id
-
-  try {
-    let user: User | null = await userRepo.findOne({
-      where: {
-        id: userId,
-      },
-    })
-    if (!user) return res.status(404).json({ message: 'User not found' })
-
-    if (!isNaN(email)) user.email = email
-    if (!isNaN(password)) user.password_hash = await bcrypt.hash(password, 10)
-    if (!isNaN(username)) user.username = username
-
-    await userRepo.save(user)
-    return res.status(200).json({ message: 'update made successfully' })
-  } catch (err: any) {
-    console.error(err)
     next(err)
   }
 }
 
-// const updateUserPassword = async(req:any, res:any, next:any)=>{
-//   const {oldPassword, newPassword, confirmPassword} = req.body
-//   try{
+const updateUsername = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { username } = req.body
+  const userId = req.id
 
-//   }
-// }
+  try {
+    let user = await userRepo.findOne({
+      where: {
+        username: username,
+      },
+      select: {
+        id: true
+      },
+    })
 
-const handleLogout = async (req: any, res: any, next: any) => {
+    if (user && user.id == userId) {
+      return res.status(409).json({
+        message: 'Username already exists',
+      })
+    }
+
+    await userRepo.update(userId, { username: username })
+    return res.status(200).json({ message: 'update made successfully' })
+  } catch (err: any) {
+    next(err)
+  }
+}
+
+const updateUserPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { currentPassword, newPassword, confirmPassword } = req.body
   const userId = req.id
   try {
-    const foundUser = await userRepo.findOne({
+    const user = await userRepo.findOne({
+      where: {
+        id: userId,
+      },
+      select: {
+        password_hash: true,
+      },
+    })
+    if (!user) {
+      return res.status(401).json({ message: 'Unauthorized' })
+    }
+    const isValidPassword = await bcrypt.compare(
+      currentPassword,
+      user.password_hash
+    )
+
+    if (!isValidPassword) {
+      return res.status(401).json({ message: 'invalid' })
+    }
+
+    if (currentPassword == newPassword) {
+      return res.status(400).json({ message: 'New password must differ' })
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(401).json({ message: 'password do not match' })
+    }
+    const hashNewPassword = await bcrypt.hash(newPassword, 10)
+
+    await userRepo.update(userId, { password_hash: hashNewPassword })
+    return res.sendStatus(204)
+  } catch (err) {
+    next(err)
+  }
+}
+
+const handleLogout = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const userId = req.id
+  try {
+    const user = await userRepo.findOne({
       where: {
         id: userId,
       },
     })
 
-    if (!foundUser) return res.status(404).json({ message: 'user not found' })
-    let token = await client.get(`auth:${foundUser.id}`)
-    if (!token) return res.status(401).json({ message: 'Unauthorized' })
+    if (!user) {
+      return res.status(404).json({ message: 'Unauthorized' })
+    }
+    let token = await client.get(`auth:${user.id}`)
+    if (!token) {
+      return res.status(403).json({ message: 'Forbidden' })
+    }
 
     await client.del(`auth:${userId}`)
 
@@ -266,7 +338,11 @@ const handleLogout = async (req: any, res: any, next: any) => {
   }
 }
 
-const getCurrentUser = async (req: any, res: any, next: any) => {
+const getCurrentUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const userId = req.id
   try {
     const user = await userRepo.findOne({
@@ -274,7 +350,9 @@ const getCurrentUser = async (req: any, res: any, next: any) => {
         id: userId,
       },
     })
-    if (!user) return res.status(404).json({ message: 'user not found' })
+    if (!user) {
+      return res.status(404).json({ message: 'user not found' })
+    }
     let userResult: Partial<User> = {
       id: user.id,
       email: user.email,
@@ -287,13 +365,21 @@ const getCurrentUser = async (req: any, res: any, next: any) => {
   }
 }
 
-const deleteAccount = async (req: any, res: any, next: any) => {
+const deleteAccount = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const userId = req.id
   try {
     const user = await userRepo.findOne({ where: { id: userId } })
-    if (!user) return res.status(404).json({ message: 'User not found' })
+    if (!user) {
+      return res.status(401).json({ message: 'Unauthorized' })
+    }
     let token = await client.get(`auth:${userId}`)
-    if (!token) return res.status(401).json({ message: 'Unauthorized' })
+    if (!token) {
+      return res.status(403).json({ message: 'Forbidden' })
+    }
 
     await client.del(`auth:${userId}`)
     await userRepo.delete({
@@ -310,7 +396,8 @@ export default {
   forgotPassword,
   resetPassword,
   verifyOtp,
-  updateUser,
+  updateUsername,
+  updateUserPassword,
   handleLogout,
   getCurrentUser,
   deleteAccount,

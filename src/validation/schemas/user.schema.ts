@@ -70,16 +70,7 @@ export const updatePasswordSchema = Joi.object({
 })
 
 export const updateUsernameSchema = Joi.object({
-  oldUsername: Joi.string()
-    .alphanum()
-    .min(4)
-    .max(20)
-    .messages({
-      'string.empty': 'Display name cannot be empty',
-      'string.min': 'Min 6 characters',
-    })
-    .required(),
-  newUsername: Joi.string()
+  username: Joi.string()
     .alphanum()
     .min(4)
     .max(20)
