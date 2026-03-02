@@ -59,8 +59,10 @@ export const updateEmailSchema = Joi.object({
     .email()
     .message('must be a valid email address')
     .required(),
-  password: Joi.string().passwordComplexity().min(8).required(),
-  username: Joi.string().required(),
+  newEmail: Joi.string()
+    .email()
+    .message('must be a valid email address')
+    .required(),
 })
 
 export const updatePasswordSchema = Joi.object({

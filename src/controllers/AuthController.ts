@@ -6,6 +6,8 @@ import client from '../configs/redis.configs'
 import jwt from 'jsonwebtoken'
 import normalizeEmail from 'normalize-email'
 import { Request, Response, NextFunction } from 'express'
+import redisService from '../services/redis.service'
+import emailService from '../services/email.service'
 
 let userRepo = AppDataSource.getRepository(User)
 
@@ -89,9 +91,10 @@ const handleSignin = async (
       { expiresIn: Number(process.env.TOKEN_EXP) }
     )
 
-    await client.set(`auth:${user.id}`, token, {
-      EX: Number(process.env.TOKEN_EXP),
-    })
+    // await client.set(`auth:${user.id}`, token, {
+    //   EX: Number(process.env.TOKEN_EXP),
+    // })
+    redisService.setAuthId(user.id, token)
 
     return res.status(200).json({
       id: user.id,
@@ -138,9 +141,10 @@ const forgotPassword = async (
 
     const hashedOtp: string = await authService.storeHashedOtpCode(otp)
 
-    await client.set(`otp:${email}`, hashedOtp, {
-      EX: Number(process.env.OTP_EXP),
-    })
+    // await client.set(`otp:${email}`, hashedOtp, {
+    //   EX: Number(process.env.OTP_EXP),
+    // })
+    redisService.setEmailOtp(email, hashedOtp)
 
     // if (attempts) {
     //   await client.incr(rateLimitKey)
@@ -151,7 +155,7 @@ const forgotPassword = async (
     // }
 
     // TODO: MOVE THIS TO `email service`
-    await authService.sendForgotEmail(email, otp, user.username)
+    await emailService.sendForgotEmail(email, otp, user.username)
 
     return res.status(200).json({
       message: 'OTP code successfully sent',
@@ -168,7 +172,7 @@ const verifyOtp = async (req: Request, res: Response, next: NextFunction) => {
     const storeHashedOtpCode: string | null = await client.get(`otp:${email}`)
 
     if (!storeHashedOtpCode) {
-      return res.status(401).send('OTP expired')
+      return res.status(400).send('OTP expired')
     }
 
     const isValid: boolean = await bcrypt.compare(otp, storeHashedOtpCode)
@@ -177,11 +181,15 @@ const verifyOtp = async (req: Request, res: Response, next: NextFunction) => {
       return res.status(401).send('Invalid otp')
     }
 
-    await client.del(`otp:${email}`)
+    await Promise.all([
+      redisService.deleteEmailOtp,
+      redisService.setResetPasswordToken,
+    ])
+    // await client.del(`otp:${email}`)
 
-    await client.set(`reset:password:${email}`, 'yes', {
-      EX: 300,
-    })
+    // await client.set(`reset:password:${email}`, 'yes', {
+    //   EX: 300,
+    // })
     return res.status(200).json({ message: 'otp verified' })
   } catch (err: any) {
     next(err)
@@ -196,11 +204,12 @@ const resetPassword = async (
   const { email, newPassword } = req.body
 
   try {
-    const storeResetPasswordToken: string | null = await client.get(
-      `reset:password:${email}`
-    )
+    const getResetPasswordToken = await redisService.getResetPasswordToken(email)
+    // const storeResetPasswordToken: string | null = await client.get(
+    //   `reset:password:${email}`
+    // )
 
-    if (!storeResetPasswordToken) {
+    if (!getResetPasswordToken) {
       return res.status(400).json({ message: 'Reset token expired' })
     }
 
@@ -223,7 +232,8 @@ const resetPassword = async (
     const hashedPassword: string = await bcrypt.hash(newPassword, 10)
 
     await userRepo.update(user.id, { password_hash: hashedPassword })
-    await client.del(`reset:password:${email}`)
+    redisService.deleteResetPasswordToken(email)
+    // await client.del(`reset:password:${email}`)
 
     return res.status(200).json({
       message: 'reset password successful',
@@ -247,11 +257,11 @@ const updateUsername = async (
         username: username,
       },
       select: {
-        id: true
+        id: true,
       },
     })
 
-    if (user && user.id == userId) {
+    if (user && user.id !== userId) {
       return res.status(409).json({
         message: 'Username already exists',
       })
@@ -319,17 +329,21 @@ const handleLogout = async (
       where: {
         id: userId,
       },
+      select: {
+        id: true,
+      },
     })
 
     if (!user) {
       return res.status(404).json({ message: 'Unauthorized' })
     }
-    let token = await client.get(`auth:${user.id}`)
+
+    let token = redisService.getAuthId(userId)
     if (!token) {
       return res.status(403).json({ message: 'Forbidden' })
     }
 
-    await client.del(`auth:${userId}`)
+    redisService.deleteAuthId(userId)
 
     return res.status(200).json({ message: 'Logout Successful' })
   } catch (err: any) {
@@ -376,15 +390,16 @@ const deleteAccount = async (
     if (!user) {
       return res.status(401).json({ message: 'Unauthorized' })
     }
-    let token = await client.get(`auth:${userId}`)
+    let token = redisService.getAuthId(userId)
     if (!token) {
       return res.status(403).json({ message: 'Forbidden' })
     }
 
-    await client.del(`auth:${userId}`)
+    redisService.deleteAuthId(userId)
     await userRepo.delete({
       id: userId,
     })
+    return res.sendStatus(200)
   } catch (err) {
     console.log(err)
     next(err)
