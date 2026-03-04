@@ -1,4 +1,6 @@
-import Joi from 'joi'
+import Joi from "../utils/extended-joi"
+
+console.log(`The result is ${typeof Joi.string().passwordComplexity}`)
 
 export const userIdSchema = Joi.object({
   userId: Joi.string().required().messages({

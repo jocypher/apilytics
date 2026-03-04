@@ -3,9 +3,21 @@ const routes = express.Router()
 import authController from '../controllers/AuthController'
 import verifyJwtMiddlewares from '../middlewares/verifyJwt.middlewares'
 import validate from '../middlewares/validation.middleware'
-import { deleteProfileSchema, forgotPasswordSchema, getProfileSchema, loginSchema, logoutSchema, registerSchema, resetPasswordSchema, updateEmailSchema, updateUsernameSchema, updatePasswordSchema, verifyOtpSchema } from '../validation/schemas/user.schema'
+import {
+  deleteProfileSchema,
+  forgotPasswordSchema,
+  getProfileSchema,
+  loginSchema,
+  logoutSchema,
+  registerSchema,
+  resetPasswordSchema,
+  updateEmailSchema,
+  updateUsernameSchema,
+  updatePasswordSchema,
+  verifyOtpSchema,
+} from '../validation/schemas/user.schema'
 import rateLimiter from '../middlewares/ratelimiter.middleware'
-
+import { rateLimitKeys } from '../validation/constants/rate_limit_keys'
 
 routes.post(
   '/register',
@@ -16,27 +28,27 @@ routes.post(
 routes.post(
   '/signin',
   validate(loginSchema),
-  rateLimiter(9,2, ()=> 'signin'),
+  rateLimiter(10, 60, rateLimitKeys.signin),
   authController.handleSignin
 )
 
 routes.post(
   '/forgot-password',
-  rateLimiter(5, 2, () => 'forgot-password'),
+  rateLimiter(5, 120, rateLimitKeys.forgotPassword),
   validate(forgotPasswordSchema),
   authController.forgotPassword
 )
 
 routes.post(
   '/verify-otp',
-  rateLimiter(9, 2, () => 'verify-otp'),
+  rateLimiter(10, 60, rateLimitKeys.verifyOtp),
   validate(verifyOtpSchema),
   authController.verifyOtp
 )
 
 routes.post(
   '/reset-password',
-  rateLimiter(6, 2, () => 'reset-password'),
+  rateLimiter(5, 300, rateLimitKeys.resetPassword),
   validate(resetPasswordSchema),
   authController.resetPassword
 )
@@ -44,24 +56,20 @@ routes.post(
 routes.put(
   '/username',
   validate(updateUsernameSchema),
-  rateLimiter(12, 2, () => 'username'),
+  rateLimiter(10, 60, rateLimitKeys.updateUsername),
   authController.updateUsername
 )
 
 routes.put(
   '/password',
   validate(updatePasswordSchema),
-  rateLimiter(6, 2, () => 'password'),
+  rateLimiter(5, 60, rateLimitKeys.updateUserPassword),
   authController.updateUserPassword
 )
 
-routes.post('/logout',authController.handleLogout)
+routes.post('/logout', authController.handleLogout)
 
-routes.get(
-  '/me',
-  verifyJwtMiddlewares.verifyJwt,
-  authController.getCurrentUser
-)
+routes.get('/me', verifyJwtMiddlewares.verifyJwt, authController.getCurrentUser)
 
 routes.delete(
   '/delete-account',
@@ -69,9 +77,5 @@ routes.delete(
   validate(deleteProfileSchema),
   authController.deleteAccount
 )
-
-
-
-
 
 export default routes

@@ -1,13 +1,7 @@
-import bcrypt from 'bcryptjs'
-import AppDataSource from '../configs/app-datasource.config'
-import { User } from '../models/user-model.entity'
 import authService from '../services/auth.service'
-import jwt from 'jsonwebtoken'
 import normalizeEmail from 'normalize-email'
 import { Request, Response, NextFunction } from 'express'
-import redisService from '../services/redis.service'
 
-let userRepo = AppDataSource.getRepository(User)
 
 const handleSignup = async (
   req: Request,
@@ -143,7 +137,6 @@ const handleLogout = async (
     await authService.handleLogout(userId)
     return res.status(200).json({ message: 'Logout Successful' })
   } catch (err: any) {
-    console.log(err)
     next(err)
   }
 }

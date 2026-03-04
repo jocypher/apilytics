@@ -21,8 +21,8 @@ const signup = async (username: string, email: string, password: string) => {
   if (userExist) {
     throw new Error('user already exist')
   }
-  const genSalt = process.env.GEN_SALT
-  const hashPassword = await bcrypt.hash(password, Number(genSalt))
+  const saltRounds = Number(process.env.GEN_SALT) || 10
+  const hashPassword = await bcrypt.hash(password, saltRounds)
   let user = userRepo.create({
     username: username,
     email: normalizedEmail(email),
@@ -62,13 +62,13 @@ const login = async (email: string, password: string) => {
   const token = jwt.sign(
     {
       id: user.id,
-      email: normalizedEmail,
+      email: normalizedEmail(email),
     },
     process.env.JWT_SECRET_KEY!,
     { expiresIn: Number(process.env.TOKEN_EXP) }
   )
 
-  redisService.setAuthId(user.id, token)
+  await redisService.setAuthId(user.id, token)
 
   return { id: user.id, token }
 }
@@ -91,9 +91,10 @@ const forgotPassword = async (email: string) => {
   const otp = generateOTPCode()
   const hashOtp = await storeHashedOtpCode(otp)
 
-  redisService.setEmailOtp(email, hashOtp)
-
-  await emailService.sendForgotEmail(email, otp, user.username)
+  await Promise.all([
+    redisService.setEmailOtp(email, hashOtp),
+    emailService.sendForgotEmail(email, otp, user.username),
+  ])
 }
 
 const verifyOtp = async (otp: string, email: string) => {
@@ -110,11 +111,150 @@ const verifyOtp = async (otp: string, email: string) => {
   }
 
   await Promise.all([
-    redisService.deleteEmailOtp,
-    redisService.setResetPasswordToken,
+    redisService.deleteEmailOtp(email),
+    redisService.setResetPasswordToken(email),
   ])
 }
 
+const resetPassword = async (email: string, newPassword: string) => {
+  const getResetPasswordToken = await redisService.getResetPasswordToken(email)
+
+  if (!getResetPasswordToken) {
+    throw Error('Reset token expired')
+  }
+  const user = await userRepo.findOne({
+    where: {
+      email: email,
+    },
+    select: {
+      id: true,
+      password_hash: true,
+    },
+  })
+  if (!user?.id) {
+    throw Error('Unauthorized')
+  }
+  const saltRounds = Number(process.env.GEN_SALT) || 10
+  const hashPassword = await bcrypt.hash(newPassword, saltRounds)
+
+  await userRepo.update(user.id, { password_hash: hashPassword })
+
+  await redisService.deleteResetPasswordToken(email)
+  await redisService.deleteAuthId(user.id)
+}
+
+const updateUsername = async (username: string, userId: string) => {
+  let user = await userRepo.findOne({
+    where: {
+      username: username,
+    },
+    select: {
+      id: true,
+    },
+  })
+
+  if (user && user.id !== userId) {
+    throw Error('username already exist')
+  }
+
+  await userRepo.update(userId, { username: username })
+}
+
+const updateUserPassword = async (
+  oldPassword: string,
+  newPassword: string,
+  confirmPassword: string,
+  userId: string
+) => {
+  const user = await userRepo.findOne({
+    where: {
+      id: userId,
+    },
+    select: {
+      password_hash: true,
+    },
+  })
+  if (!user) {
+    throw Error('Unauthorized')
+  }
+
+  const isValidPassword = await bcrypt.compare(oldPassword, user.password_hash)
+
+  if (!isValidPassword) {
+    throw Error('Invalid Password')
+  }
+
+  if (oldPassword == newPassword) {
+    throw Error('Invalid Password')
+  }
+
+  if (newPassword !== confirmPassword) {
+    throw Error("passwords don't match")
+  }
+
+  const saltRounds = Number(process.env.GEN_SALT) || 10
+  const hashNewPassword = await bcrypt.hash(newPassword, saltRounds)
+  await userRepo.update(userId, { password_hash: hashNewPassword })
+}
+
+const handleLogout = async (userId: string) => {
+  const user = await userRepo.findOne({
+    where: {
+      id: userId,
+    },
+    select: {
+      id: true,
+    },
+  })
+
+  if (!user) {
+    throw Error('Unauthorized')
+  }
+
+  let token = await redisService.getAuthId(userId)
+  if (!token) {
+    throw new Error('Forbidden')
+  }
+
+  await redisService.deleteAuthId(userId)
+}
+
+const getCurrentUser = async (userId: string) => {
+  const user = await userRepo.findOne({
+    where: {
+      id: userId,
+    },
+  })
+  if (!user) {
+    throw new Error('Unauthorized')
+  }
+  let userResult: Partial<User> = {
+    id: user.id,
+    email: user.email,
+    username: user.username,
+    created_at: user.created_at,
+  }
+
+  return userResult
+}
+
+const deleteAccount = async (userId: string) => {
+  const user = await userRepo.findOne({ where: { id: userId } })
+  if (!user) {
+    throw new Error('Unauthorized')
+  }
+  let token = await redisService.getAuthId(userId)
+  if (!token) {
+    throw new Error('Unauthorized')
+  }
+
+  await Promise.all([
+    redisService.deleteAuthId(userId),
+    userRepo.delete({
+      id: userId,
+    }),
+  ])
+}
 const normalizedEmail = (email: string) => {
   return normalizeEmail(email)
 }
@@ -131,143 +271,6 @@ const storeHashedOtpCode = async (otp: string): Promise<string> => {
   return hashedCode
 }
 
-const resetPassword = async(email:string, newPassword:string) =>{
-
-  const getResetPasswordToken = await redisService.getResetPasswordToken(email)
-  
-  if(!getResetPasswordToken){
-    throw Error('Reset token expired')
-  }
-  const user = await userRepo.findOne({
-    where:{
-      email: email
-    },
-    select:{
-      id: true,
-      password_hash:true
-    }
-  })
-  if(!user?.id){
-    throw Error ('Unauthorized')
-  }
-
-  const hashPassword = await bcrypt.hash(newPassword, Number(process.env.GEN_SALT))
-
-  await userRepo.update(user.id, {password_hash: hashPassword})
-
-  redisService.deleteResetPasswordToken(email)
-}
-
-const updateUsername = async(username: string, userId: string)=>{
-      let user = await userRepo.findOne({
-        where: {
-          username: username,
-        },
-        select: {
-          id: true,
-        },
-      })
-  
-      if (user && user.id !== userId) {
-        throw Error('Unauthorized')
-      }
-  
-      await userRepo.update(userId, { username: username })
-}
-
-
-const updateUserPassword = async(oldPassword: string, newPassword:string, confirmPassword: string, userId: string)=>{
-  const user = await userRepo.findOne({
-    where:{
-      id:userId
-    },
-    select:{
-      password_hash: true
-    }
-  })
-  if (!user) {
-    throw Error('Unauthorized')
-  }
-
-  const isValidPassword = await bcrypt.compare(
-    oldPassword, 
-    user.password_hash
-  )
-
-  if(!isValidPassword){
-    throw Error('Invalid Password')
-  }
-
-   if (oldPassword == newPassword) {
-     throw Error('Invalid Password')
-   }
-
-   if (newPassword !== confirmPassword) {
-     throw Error('passwords don\'t match')
-   }
-
-   const hashNewPassword = await bcrypt.hash(newPassword, Number(process.env.GEN_SALT))
-  await userRepo.update(userId, { password_hash: hashNewPassword })
-
-}
-
-const handleLogout = async(userId: string) =>{
-   const user = await userRepo.findOne({
-        where: {
-          id: userId,
-        },
-        select: {
-          id: true,
-        },
-      })
-  
-      if (!user) {
-        throw Error('Unauthorized')
-      }
-  
-      let token = redisService.getAuthId(userId)
-      if (!token) {
-        throw Error('Forbidden')
-      }
-  
-    await redisService.deleteAuthId(userId)
-}
-
-const getCurrentUser = async(userId: string)=>{
-  const user = await userRepo.findOne({
-        where: {
-          id: userId,
-        },
-      })
-      if (!user) {
-        throw Error('Unauthorized')
-      }
-      let userResult: Partial<User> = {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        created_at: user.created_at,
-      }
-
-      return userResult
-}
-
-const deleteAccount = async(userId: string)=>{
-   const user = await userRepo.findOne({ where: { id: userId } })
-   if (!user) {
-     throw Error('Unauthorized')
-   }
-   let token = redisService.getAuthId(userId)
-   if (!token) {
-     throw Error('Unauthorized')
-   }
-
-   redisService.deleteAuthId(userId)
-   await userRepo.delete({
-     id: userId,
-   })
-}
-
 export default {
   generateOTPCode,
   storeHashedOtpCode,
@@ -280,5 +283,5 @@ export default {
   updateUserPassword,
   handleLogout,
   getCurrentUser,
-  deleteAccount
+  deleteAccount,
 }
