@@ -6,10 +6,17 @@ import { User } from '../models/user-model.entity'
 import jwt from 'jsonwebtoken'
 import redisService from './redis.service'
 import emailService from './email.service'
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  UnauthorizedError,
+} from '../validation/utils/errors/errors'
 
 let userRepo = AppDataSource.getRepository(User)
 
 const signup = async (username: string, email: string, password: string) => {
+  console.log(normalizedEmail(email))
   const userExist = await userRepo.findOne({
     where: [{ email: normalizedEmail(email) }, { username: username }],
     select: {
@@ -19,7 +26,7 @@ const signup = async (username: string, email: string, password: string) => {
     },
   })
   if (userExist) {
-    throw new Error('user already exist')
+    throw new ConflictError('user already exist')
   }
   const saltRounds = Number(process.env.GEN_SALT) || 10
   const hashPassword = await bcrypt.hash(password, saltRounds)
@@ -30,12 +37,7 @@ const signup = async (username: string, email: string, password: string) => {
   })
 
   await userRepo.save(user)
-  return {
-    id: user.id,
-    username: user.username,
-    email: user.email,
-    createdAt: user.created_at,
-  }
+  return user
 }
 
 const login = async (email: string, password: string) => {
@@ -50,13 +52,13 @@ const login = async (email: string, password: string) => {
   })
 
   if (!user) {
-    throw new Error('Invalid credentials')
+    throw new BadRequestError('Invalid credentials')
   }
 
   const isValid = await bcrypt.compare(password, user.password_hash)
 
   if (!isValid) {
-    throw new Error('Invalid credentials')
+    throw new BadRequestError('Invalid credentials')
   }
 
   const token = jwt.sign(
@@ -65,7 +67,7 @@ const login = async (email: string, password: string) => {
       email: normalizedEmail(email),
     },
     process.env.JWT_SECRET_KEY!,
-    { expiresIn: Number(process.env.TOKEN_EXP) }
+    { expiresIn: '1h' }
   )
 
   await redisService.setAuthId(user.id, token)
@@ -86,7 +88,7 @@ const forgotPassword = async (email: string) => {
   })
 
   if (!user) {
-    throw new Error('Unauthorized')
+    throw new UnauthorizedError()
   }
   const otp = generateOTPCode()
   const hashOtp = await storeHashedOtpCode(otp)
@@ -101,13 +103,13 @@ const verifyOtp = async (otp: string, email: string) => {
   const getHashedOtpCode = await redisService.getEmailOtp(email)
 
   if (!getHashedOtpCode) {
-    throw new Error('Otp expired or not found')
+    throw new ForbiddenError('Otp expired or not found')
   }
 
   const isOtpValid = await bcrypt.compare(otp, getHashedOtpCode)
 
   if (!isOtpValid) {
-    throw Error('Invalid otp')
+    throw new UnauthorizedError('Invalid otp')
   }
 
   await Promise.all([
@@ -120,7 +122,7 @@ const resetPassword = async (email: string, newPassword: string) => {
   const getResetPasswordToken = await redisService.getResetPasswordToken(email)
 
   if (!getResetPasswordToken) {
-    throw Error('Reset token expired')
+    throw new UnauthorizedError('Reset token expired')
   }
   const user = await userRepo.findOne({
     where: {
@@ -132,7 +134,7 @@ const resetPassword = async (email: string, newPassword: string) => {
     },
   })
   if (!user?.id) {
-    throw Error('Unauthorized')
+    throw new UnauthorizedError()
   }
   const saltRounds = Number(process.env.GEN_SALT) || 10
   const hashPassword = await bcrypt.hash(newPassword, saltRounds)
@@ -154,7 +156,7 @@ const updateUsername = async (username: string, userId: string) => {
   })
 
   if (user && user.id !== userId) {
-    throw Error('username already exist')
+    throw new ConflictError('username already exist')
   }
 
   await userRepo.update(userId, { username: username })
@@ -175,21 +177,21 @@ const updateUserPassword = async (
     },
   })
   if (!user) {
-    throw Error('Unauthorized')
+    throw new UnauthorizedError()
   }
 
   const isValidPassword = await bcrypt.compare(oldPassword, user.password_hash)
 
   if (!isValidPassword) {
-    throw Error('Invalid Password')
+    throw new BadRequestError('Invalid Password')
   }
 
   if (oldPassword == newPassword) {
-    throw Error('Invalid Password')
+    throw new BadRequestError('Invalid Password')
   }
 
   if (newPassword !== confirmPassword) {
-    throw Error("passwords don't match")
+    throw new BadRequestError("passwords don't match")
   }
 
   const saltRounds = Number(process.env.GEN_SALT) || 10
@@ -208,12 +210,12 @@ const handleLogout = async (userId: string) => {
   })
 
   if (!user) {
-    throw Error('Unauthorized')
+    throw new UnauthorizedError()
   }
 
   let token = await redisService.getAuthId(userId)
   if (!token) {
-    throw new Error('Forbidden')
+    throw new ForbiddenError()
   }
 
   await redisService.deleteAuthId(userId)
@@ -226,7 +228,7 @@ const getCurrentUser = async (userId: string) => {
     },
   })
   if (!user) {
-    throw new Error('Unauthorized')
+    throw new UnauthorizedError()
   }
   let userResult: Partial<User> = {
     id: user.id,
@@ -241,11 +243,11 @@ const getCurrentUser = async (userId: string) => {
 const deleteAccount = async (userId: string) => {
   const user = await userRepo.findOne({ where: { id: userId } })
   if (!user) {
-    throw new Error('Unauthorized')
+    throw new UnauthorizedError()
   }
   let token = await redisService.getAuthId(userId)
   if (!token) {
-    throw new Error('Unauthorized')
+    throw new UnauthorizedError()
   }
 
   await Promise.all([

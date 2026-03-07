@@ -5,7 +5,7 @@ import { redisKey } from '../validation/constants/redis_keys'
 
 const setAuthId = async (id: string, token: string) => {
   await client.set(redisKey.auth(id), token, {
-    EX: Number(process.env.TOKEN_EXP),
+    EX: 60 * 60,
   })
 }
 
@@ -18,7 +18,7 @@ const deleteAuthId = async (id: string) => {
 }
 const setEmailOtp = async (email: string, hashedOtp: string) => {
   await client.set(redisKey.otp(email), hashedOtp, {
-    EX: Number(process.env.OTP_EXP),
+    EX: 60 * 10,
   })
 }
 
@@ -27,7 +27,7 @@ const getEmailOtp = async (email: string) => {
 }
 
 const deleteEmailOtp = async (email: string) => {
-   await client.del(redisKey.otp(email))
+  await client.del(redisKey.otp(email))
 }
 
 const setResetPasswordToken = async (email: string) => {
@@ -37,13 +37,29 @@ const setResetPasswordToken = async (email: string) => {
 }
 
 const getResetPasswordToken = async (email: string) => {
- return await client.get(redisKey.reset(email))
+  return await client.get(redisKey.reset(email))
 }
 
 const deleteResetPasswordToken = async (email: string) => {
   await client.del(redisKey.reset(email))
 }
 
+const setInviteToken = async (
+  hashToken: string,
+  email: string,
+  orgId: string,
+  id:string
+) => {
+  await client.set(
+    redisKey.invite(hashToken),
+    JSON.stringify({
+      email,
+      organizationId: orgId,
+      invitedBy: id,
+    }),
+    { EX: 60 * 60 * 24 }
+  )
+}
 
 export default {
   setAuthId,
@@ -54,5 +70,6 @@ export default {
   getResetPasswordToken,
   deleteAuthId,
   deleteEmailOtp,
-  deleteResetPasswordToken
+  deleteResetPasswordToken,
+  setInviteToken
 }

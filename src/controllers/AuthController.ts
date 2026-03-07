@@ -8,21 +8,21 @@ const handleSignup = async (
   res: Response,
   next: NextFunction
 ) => {
-  let { name, userEmail, userPassword } = req.body
+  let { username, email, password } = req.body
   try {
-    let { id, username, email, createdAt } = await authService.signup(
-      name,
-      userEmail,
-      userPassword
+    let user = await authService.signup(
+      username,
+      email,
+      password
     )
     return res
       .status(201)
       .json({
         message: 'user account created',
         email: email,
-        id: id,
+        id: user.id,
         username: username,
-        createdAt: createdAt,
+        createdAt: user.created_at,
       })
   } catch (err: any) {
     next(err)

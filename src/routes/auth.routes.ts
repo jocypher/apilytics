@@ -6,9 +6,7 @@ import validate from '../middlewares/validation.middleware'
 import {
   deleteProfileSchema,
   forgotPasswordSchema,
-  getProfileSchema,
   loginSchema,
-  logoutSchema,
   registerSchema,
   resetPasswordSchema,
   updateEmailSchema,
@@ -28,7 +26,7 @@ routes.post(
 routes.post(
   '/signin',
   validate(loginSchema),
-  rateLimiter(10, 60, rateLimitKeys.signin),
+  rateLimiter(10, 600, rateLimitKeys.signin),
   authController.handleSignin
 )
 
