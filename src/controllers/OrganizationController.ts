@@ -161,61 +161,7 @@ const getMembersInOrganization = async (
 const acceptOrganizationInvite = async (req: any, res: any, next: any) => {
   const { token, orgId } = req.query
   try {
-    const data = await client.get(`org_invite:${token}`)
-
-    if (!data) {
-      throw new NotFoundError('Invite not found or expired')
-    }
-
-    const inviteData = JSON.parse(data)
-    if (inviteData.organizationId != orgId) {
-      throw new ForbiddenError('Invalid invite')
-    }
-
-    let user = await userRepo.findOne({
-      where: { email: inviteData.email },
-    })
-
-    if (!user) {
-      user = userRepo.create({
-        email: inviteData.email,
-        username: inviteData.email.split('@')[0],
-      })
-
-      await userRepo.save(user)
-    }
-
-    let organization = await orgRepo.findOne({
-      where: {
-        id: orgId,
-      },
-    })
-    if (!organization) {
-      throw new NotFoundError('Organization does not exist')
-    }
-
-    const existingMembership = await orgUserRepo.findOne({
-      where: {
-        user: { id: user.id },
-        organization: { id: orgId },
-      },
-      relations: ['user', 'organization'],
-    })
-    if (existingMembership) {
-      throw new ForbiddenError('User already a member of the organization')
-    }
-
-    const orgUser = orgUserRepo.create({
-      display_name: user.username,
-      user: user,
-      organization: organization,
-      role: 'member',
-      invite_status: 'accepted',
-      invited_by_user_id: inviteData.invitedBy,
-    })
-
-    await orgUserRepo.save(orgUser)
-    await client.del(`org_invite:${token}`)
+    await organizationService.acceptOrganizationInvite(token, orgId)
     return res.status(200).json({ message: 'User accepted to organization' })
   } catch (err: any) {
     next(err)
@@ -227,37 +173,25 @@ const updateUserRole = async (req: any, res: any, next: any) => {
   const reqUserId = req.id
 
   try {
-    let existingMembership = await orgUserRepo.findOne({
-      where: {
-        user: { id: targetUserId },
-        organization: { id: orgId },
-      },
-      relations: ['organization', 'user'],
-    })
-    if (!existingMembership)
-      return res
-        .status(404)
-        .json({ message: 'user does not exist in the organization' })
-
-    if (!sharedUtils.isOrgAdminOrOwner(reqUserId)) {
-      return res.status(403).json({ message: 'Forbidden' })
-    }
-
-    existingMembership.role = 'admin'
-
-    await orgUserRepo.save(existingMembership)
-
-    return res.status(200).json({ message: 'updated role successfully' })
+    await organizationService.updateUserRole(targetUserId, orgId, reqUserId)
+    return res.status(200).json({ message: 'role updated successfully' })
   } catch (err: any) {
     console.error(err)
     next(err)
   }
 }
-const getUsersOrganization = async (
+const getUsersOrganizations = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {}
+) => {
+  try{
+  let orgs = await organizationService.getUsersOrganizations(req.id)
+  return res.status(200).json({orgs})
+  }catch(err){
+    next(err)
+  }
+}
 
 export default {
   createOrganization,
@@ -269,5 +203,5 @@ export default {
   acceptOrganizationInvite,
   getOrganizationById,
   updateUserRole,
-  getUsersOrganization,
+  getUsersOrganizations,
 }
