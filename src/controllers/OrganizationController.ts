@@ -6,10 +6,14 @@ import organizationService from '../services/organization.service'
 import client from '../configs/redis.configs'
 import bcrypt from 'bcryptjs'
 import sharedUtils from '../validation/utils/shared.utils'
-import { UnauthorizedError } from '../validation/utils/errors/errors'
+import {
+  ForbiddenError,
+  NotFoundError,
+  UnauthorizedError,
+} from '../validation/utils/errors/errors'
 import emailService from '../services/email.service'
 import { Request, Response, NextFunction } from 'express'
-import { FindOptionsWhere } from 'typeorm'
+import { FindOptionsWhere, Not } from 'typeorm'
 
 const userRepo = AppDataSource.getRepository(User)
 const orgRepo = AppDataSource.getRepository(Organization)
@@ -134,12 +138,19 @@ const sendInvitation = async (
   }
 }
 
-const getMembersInOrganization = async (req: Request, res: Response, next: NextFunction) => {
+const getMembersInOrganization = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const userId = req.id
   const { orgId } = req.params
 
   try {
-    let result = await organizationService.getMembersInOrganization(userId, orgId as string)
+    let result = await organizationService.getMembersInOrganization(
+      userId,
+      orgId as string
+    )
     return res.status(200).json(result)
   } catch (err: any) {
     next(err)
@@ -149,58 +160,50 @@ const getMembersInOrganization = async (req: Request, res: Response, next: NextF
 
 const acceptOrganizationInvite = async (req: any, res: any, next: any) => {
   const { token, orgId } = req.query
-  const { userId } = req.params
-  const id = req.id
-
   try {
-    const user = await userRepo.findOne({
-      where: {
-        id: userId,
-      },
-    })
-    console.log(user)
-    if (!user) return res.status(404).json({ message: 'user does not exist' })
+    const data = await client.get(`org_invite:${token}`)
 
-    const keys = await client.keys(`org_invite:*`)
-
-    let inviteData: any = null
-    for (const key of keys) {
-      const data = await client.get(key)
-      if (data) {
-        const parsedData = JSON.parse(data)
-        const matchedData = await bcrypt.compare(
-          token,
-          key.replace('org_invite:', '')
-        )
-        if (
-          matchedData &&
-          parsedData.organizationId == orgId &&
-          parsedData.email == user.email
-        ) {
-          inviteData = parsedData
-          break
-        }
-      }
+    if (!data) {
+      throw new NotFoundError('Invite not found or expired')
     }
+
+    const inviteData = JSON.parse(data)
+    if (inviteData.organizationId != orgId) {
+      throw new ForbiddenError('Invalid invite')
+    }
+
+    let user = await userRepo.findOne({
+      where: { email: inviteData.email },
+    })
+
+    if (!user) {
+      user = userRepo.create({
+        email: inviteData.email,
+        username: inviteData.email.split('@')[0],
+      })
+
+      await userRepo.save(user)
+    }
+
     let organization = await orgRepo.findOne({
       where: {
         id: orgId,
       },
     })
-    if (!organization)
-      return res.status(500).json({ message: 'no org available' })
+    if (!organization) {
+      throw new NotFoundError('Organization does not exist')
+    }
 
     const existingMembership = await orgUserRepo.findOne({
       where: {
-        user: { id: userId },
+        user: { id: user.id },
         organization: { id: orgId },
       },
       relations: ['user', 'organization'],
     })
-    if (existingMembership != null)
-      return res
-        .status(401)
-        .json({ message: 'User already a member of the organization' })
+    if (existingMembership) {
+      throw new ForbiddenError('User already a member of the organization')
+    }
 
     const orgUser = orgUserRepo.create({
       display_name: user.username,
@@ -208,14 +211,14 @@ const acceptOrganizationInvite = async (req: any, res: any, next: any) => {
       organization: organization,
       role: 'member',
       invite_status: 'accepted',
-      invited_by_user_id: id,
+      invited_by_user_id: inviteData.invitedBy,
     })
 
     await orgUserRepo.save(orgUser)
+    await client.del(`org_invite:${token}`)
     return res.status(200).json({ message: 'User accepted to organization' })
   } catch (err: any) {
     next(err)
-    return res.status(500).json({ message: err.message })
   }
 }
 
@@ -248,7 +251,6 @@ const updateUserRole = async (req: any, res: any, next: any) => {
   } catch (err: any) {
     console.error(err)
     next(err)
-    
   }
 }
 const getUsersOrganization = async (
