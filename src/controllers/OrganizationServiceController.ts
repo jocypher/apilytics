@@ -5,6 +5,8 @@ import { SubComponentUser } from '../models/org-service-user.entity'
 import sharedUtils from '../validation/utils/shared.utils'
 import { User } from '../models/user-model.entity'
 import { ApiKey } from '../models/api-key.entity'
+import organizationServiceService from '../services/organization-service.service'
+import { Request, Response, NextFunction} from 'express'
 
 const orgUserRepo = AppDataSource.getRepository(OrganizationUser)
 const serviceRepo = AppDataSource.getRepository(SubComponent)
@@ -12,7 +14,7 @@ const serviceUserRepo = AppDataSource.getRepository(SubComponentUser)
 const userRepo = AppDataSource.getRepository(User)
 const apiKeyRepo = AppDataSource.getRepository(ApiKey)
 
-const createService = async (req: any, res: any, next: any) => {
+const createService = async (req: Request, res: any, next: any) => {
   const userId = req.id
   const { orgId } = req.params
   const { name } = req.body
@@ -20,30 +22,11 @@ const createService = async (req: any, res: any, next: any) => {
   if (!orgId) return res.status(404).json({ message: 'Invalid ID' })
 
   try {
-    const orgMember = await orgUserRepo.findOne({
-      where: {
-        organization: { id: orgId },
-        user: { id: userId },
-      },
-      relations: ['organization', 'user'],
-    })
-    if (!orgMember) {
-      return res.status(403).json({ message: 'Not a member' })
-    }
-    if (!sharedUtils.isOrgAdminOrOwner(orgMember)) {
-      return res.status(401).json({ message: 'User is unauthorized' })
-    }
-    const newService = serviceRepo.create({
-      name: name,
-      created_by: orgMember?.user,
-      organization: orgMember?.organization,
-    })
-    const savedService = await serviceRepo.save(newService)
-    return res.status(201).json({ message: savedService })
+   let result = await organizationServiceService.createService(userId, orgId as string, name)
+    return res.status(201).json({ message: result})
   } catch (err: any) {
     console.error(err)
     next(err)
-    return res.status(500).json({ message: err.message })
   }
 }
 
@@ -56,79 +39,18 @@ const assignUserToService = async (req: any, res: any, next: any) => {
   }
 
   try {
-    const requesterMembership = await orgUserRepo.findOne({
-      where: {
-        organization: { id: orgId },
-        user: { id: userId },
-      },
-      relations: ['organization', 'user'],
-    })
-    if (!requesterMembership) {
-      return res.status(403).json({ message: 'Not a member' })
-    }
-
-    if (!sharedUtils.isOrgAdminOrOwner(requesterMembership)) {
-      return res.status(401).json({ message: 'User is unauthorized' })
-    }
-
-    const targetMembership = await orgUserRepo.findOne({
-      where: {
-        organization: { id: orgId },
-        user: { id: roleToChangeId },
-      },
-      relations: ['organization', 'user'],
-    })
-
-    if (!targetMembership) {
-      return res
-        .status(401)
-        .json({ message: 'user isnt part of the organization' })
-    }
-
-    let service = await serviceRepo.findOne({
-      where: {
-        id: serviceId,
-        organization: { id: orgId },
-      },
-      relations: ['organization'],
-    })
-    if (!service) return res.status(404).json({ message: 'Service not found' })
-
-    const existingAssignment = await serviceUserRepo.findOne({
-      where: {
-        user: { id: targetMembership.user.id },
-
-        sub_component: { id: service.id },
-      },
-      relations: ['user'],
-    })
-
-    if (existingAssignment) {
-      return res
-        .status(409)
-        .json({ message: 'User already assigned to service' })
-    }
-
-    let serviceUser = serviceUserRepo.create({
-      user: targetMembership.user,
-      sub_component: service,
-      assigned_by: requesterMembership?.user,
-    })
-
-    let result = await serviceUserRepo.save(serviceUser)
+  let result = await organizationServiceService.assignUserToService(userId, orgId, serviceId, roleToChangeId)
 
     return res.status(201).json({ message: result })
   } catch (err: any) {
-    console.error(err)
     next(err)
-    return res.status(500).json({ message: `Server error ${err}` })
   }
 }
 
 
 const deleteService = async (req: any, res: any, next: any) => {
   const userId = req.id
-  const { orgId, svcId } = req.params
+  const { orgId, serviceId } = req.params
   try {
     const orgMember = await orgUserRepo.findOne({
       where: {
@@ -144,7 +66,7 @@ const deleteService = async (req: any, res: any, next: any) => {
       return res.status(401).json({ message: 'Unauthorized' })
 
     const foundService = await serviceRepo.findOne({
-      where: { id: svcId, organization: { id: orgId } },
+      where: { id: serviceId, organization: { id: orgId } },
       relations: ['organization'],
     })
 
@@ -152,10 +74,10 @@ const deleteService = async (req: any, res: any, next: any) => {
       return res.status(404).json({ message: 'Service not found' })
 
     await serviceUserRepo.delete({
-      sub_component: { id: svcId },
+      sub_component: { id: serviceId },
     })
 
-    await serviceRepo.delete({ id: svcId })
+    await serviceRepo.delete({ id: serviceId })
 
     return res.status(200).json({ message: 'Service deleted successfully' })
   } catch (err) {
