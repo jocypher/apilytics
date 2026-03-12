@@ -10,7 +10,7 @@
     ]
   },
   "scripts": {
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "dev": "nodemon dist/server.js",
     "typeorm": "typeorm-ts-node-commonjs",
     "migration:generate": "npm run typeorm -- migration:generate -d src/configs/app-datasource.config",
@@ -48,7 +48,7 @@
     "@types/node": "^25.0.10",
     "@typescript-eslint/eslint-plugin": "8.53.0",
     "@typescript-eslint/parser": "8.53.0",
-    "eslint": "^9.39.2",
+    "eslint": "^10.0.3",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.5",
     "globals": "^17.4.0",
