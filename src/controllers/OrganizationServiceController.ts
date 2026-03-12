@@ -6,7 +6,7 @@ import sharedUtils from '../validation/utils/shared.utils'
 import { User } from '../models/user-model.entity'
 import { ApiKey } from '../models/api-key.entity'
 import organizationServiceService from '../services/organization-service.service'
-import { Request, Response, NextFunction} from 'express'
+import { Request} from 'express'
 
 const orgUserRepo = AppDataSource.getRepository(OrganizationUser)
 const serviceRepo = AppDataSource.getRepository(SubComponent)
@@ -16,30 +16,25 @@ const apiKeyRepo = AppDataSource.getRepository(ApiKey)
 
 const createService = async (req: Request, res: any, next: any) => {
   const userId = req.id
-  const { orgId } = req.params
-  const { name } = req.body
-
-  if (!orgId) return res.status(404).json({ message: 'Invalid ID' })
+  const orgId  = sharedUtils.validatedParam(req.params.orgId)
+  const {name} = req.body
 
   try {
-   let result = await organizationServiceService.createService(userId, orgId as string, name)
+   const result = await organizationServiceService.createService(userId, orgId, name)
     return res.status(201).json({ message: result})
-  } catch (err: any) {
-    console.error(err)
+  } catch (err: unknown) {
     next(err)
   }
 }
 
 const assignUserToService = async (req: any, res: any, next: any) => {
   const userId = req.id
-  const { orgId, serviceId, roleToChangeId } = req.params
-
-  if (!orgId || !serviceId || !roleToChangeId) {
-    return res.status(400).json({ message: 'Missing required parameters' })
-  }
+  const orgId = sharedUtils.validatedParam(req.params.orgId)
+  const serviceId = Number(req.params.serviceId)
+  const  roleToChangeId =sharedUtils.validatedParam(req.params.roleToChangeId)
 
   try {
-  let result = await organizationServiceService.assignUserToService(userId, orgId, serviceId, roleToChangeId)
+  const result = await organizationServiceService.assignUserToService(userId, orgId, serviceId, roleToChangeId)
 
     return res.status(201).json({ message: result })
   } catch (err: any) {
@@ -50,7 +45,8 @@ const assignUserToService = async (req: any, res: any, next: any) => {
 
 const deleteService = async (req: any, res: any, next: any) => {
   const userId = req.id
-  const { orgId, serviceId } = req.params
+  const orgId = sharedUtils.validatedParam(req.params.orgId)
+  const  serviceId  =Number(req.params.svcId)
   try {
     const orgMember = await orgUserRepo.findOne({
       where: {
@@ -89,7 +85,8 @@ const deleteService = async (req: any, res: any, next: any) => {
 
 const getServiceById = async (req: any, res: any, next: any) => {
   const requesterId = req.id
-  const { svcId, orgId } = req.params
+    const orgId = sharedUtils.validatedParam(req.params.orgId)
+    const serviceId = Number(req.params.svcId)
   try {
     const membership = await orgUserRepo.findOne({
       where: {
@@ -103,7 +100,7 @@ const getServiceById = async (req: any, res: any, next: any) => {
       return res.status(404).json({ message: 'user not a member' })
     const foundService = await serviceRepo.findOne({
       where: {
-        id: svcId,
+        id: serviceId,
         organization: { id: orgId },
       },
       relations: ['organization'],
@@ -124,15 +121,12 @@ const getServiceById = async (req: any, res: any, next: any) => {
 
 const getAssignedUserForService = async (req: any, res: any, next: any) => {
   const userId = req.id
-  const { orgId, svcId } = req.params
+    const orgId = sharedUtils.validatedParam(req.params.orgId)
+    const serviceId = Number(req.params.svcId)
   const page = Number(req.query.page) || 1
   const limit = Number(req.query.limit) || 10
   const skip = (page - 1) * limit
 
-  if (!orgId || !svcId)
-    return res.status(401).json({
-      message: 'Missing required parameters',
-    })
   try {
     const orgMember = await orgUserRepo.findOne({
       where: {
@@ -147,7 +141,7 @@ const getAssignedUserForService = async (req: any, res: any, next: any) => {
 
     const foundService = await serviceRepo.findOne({
       where: {
-        id: svcId,
+        id: serviceId,
         organization: { id: orgId },
       },
       relations: ['organization'],
@@ -162,14 +156,16 @@ const getAssignedUserForService = async (req: any, res: any, next: any) => {
 
     const [assignments, total] = await serviceUserRepo.findAndCount({
       where: {
-        sub_component: { id: svcId },
+        sub_component: { id: serviceId },
       },
       relations: ['user'],
       skip,
       take: limit,
     })
-    if (assignments.length === 0)
+    if (assignments.length === 0){
       return res.status(404).json({ message: 'No assigned users' })
+    }
+      
     const users = assignments.map((a: SubComponentUser) => a.user)
     return res.status(200).json({
       page,
@@ -187,7 +183,8 @@ const getAssignedUserForService = async (req: any, res: any, next: any) => {
 
 const generateApiKey = async (req: any, res: any, next: any) => {
   const userId = req.id
-  const { orgId, serviceId } = req.params
+      const orgId = sharedUtils.validatedParam(req.params.orgId)
+      const serviceId = Number(req.params.svcId)
 
   try {
     const foundUser = await userRepo.findOne({

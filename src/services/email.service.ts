@@ -35,9 +35,8 @@ const sendForgotEmail = async (email: string, message: string, username: string)
     )
 
     return response.data
-  } catch (error: any) {
-    console.error('Mailjet error:', error.response?.data || error.message)
-    throw error 
+  } catch (error: unknown) {
+    throw new Error("Something went wrong", {cause:error})
   }
 }
 
@@ -81,9 +80,8 @@ const sendInvite = async (
     )
 
     return response.data
-  } catch (err: any) {
-    console.error('error from MailJet', err.message)
-    throw err
+  } catch (error: unknown) {
+        throw new Error('Something went wrong', { cause: error })
   }
 }
 

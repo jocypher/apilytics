@@ -13,7 +13,7 @@ import {
   UnauthorizedError,
 } from '../validation/utils/errors/errors'
 
-let userRepo = AppDataSource.getRepository(User)
+const userRepo = AppDataSource.getRepository(User)
 
 const signup = async (username: string, email: string, password: string) => {
   console.log(normalizedEmail(email))
@@ -30,7 +30,7 @@ const signup = async (username: string, email: string, password: string) => {
   }
   const saltRounds = Number(process.env.GEN_SALT) || 10
   const hashPassword = await bcrypt.hash(password, saltRounds)
-  let user = userRepo.create({
+  const user = userRepo.create({
     username: username,
     email: normalizedEmail(email),
     password_hash: hashPassword,
@@ -76,7 +76,7 @@ const login = async (email: string, password: string) => {
 }
 
 const forgotPassword = async (email: string) => {
-  let user = await userRepo.findOne({
+  const user = await userRepo.findOne({
     where: {
       email: email,
     },
@@ -146,7 +146,7 @@ const resetPassword = async (email: string, newPassword: string) => {
 }
 
 const updateUsername = async (username: string, userId: string) => {
-  let user = await userRepo.findOne({
+  const user = await userRepo.findOne({
     where: {
       username: username,
     },
@@ -213,7 +213,7 @@ const handleLogout = async (userId: string) => {
     throw new UnauthorizedError()
   }
 
-  let token = await redisService.getAuthId(userId)
+  const token = await redisService.getAuthId(userId)
   if (!token) {
     throw new ForbiddenError()
   }
@@ -230,7 +230,7 @@ const getCurrentUser = async (userId: string) => {
   if (!user) {
     throw new UnauthorizedError()
   }
-  let userResult: Partial<User> = {
+  const userResult: Partial<User> = {
     id: user.id,
     email: user.email,
     username: user.username,
@@ -245,7 +245,7 @@ const deleteAccount = async (userId: string) => {
   if (!user) {
     throw new UnauthorizedError()
   }
-  let token = await redisService.getAuthId(userId)
+  const token = await redisService.getAuthId(userId)
   if (!token) {
     throw new UnauthorizedError()
   }

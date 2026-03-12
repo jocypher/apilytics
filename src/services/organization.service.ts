@@ -1,4 +1,3 @@
-import axios from 'axios'
 import bcrypt from 'bcryptjs'
 import AppDataSource from '../configs/app-datasource.config'
 import { User } from '../models/user-model.entity'
@@ -39,15 +38,14 @@ const createOrganization = async (organizationName: string, id: string) => {
     throw new ConflictError(`Organization with name ${orgName} already exist`)
   }
 
-  let organization = orgRepo.create({
+  const organization = orgRepo.create({
     organization_name: organizationName,
-    created_by_id: user.id,
     created_by: user,
   })
 
   await orgRepo.save(organization)
 
-  let organizationUser = orgUserRepo.create({
+  const organizationUser = orgUserRepo.create({
     display_name: user.username,
     user: user,
     organization: organization,
@@ -56,7 +54,7 @@ const createOrganization = async (organizationName: string, id: string) => {
   })
   await orgUserRepo.save(organizationUser)
 
-  let orgResult = {
+  const orgResult = {
     organization_name: organizationName,
     created_by: user.username,
     org_role: organizationUser.role,
@@ -81,7 +79,7 @@ const getAllOrganization = async (id: string) => {
   }
   const foundOrganization = await orgRepo.find({
     where: {
-      created_by_id: user.id,
+      created_by: {id: user.id},
     },
     relations: ['created_by'],
   })
@@ -135,7 +133,7 @@ const updateOrganizationName = async (
     relations: ['user', 'organization'],
   })
 
-  if (!sharedUtils.isOrgAdminOrOwner(orgUser)) throw new UnauthorizedError()
+  if (!sharedUtils.isOrgAdminOrOwner(orgUser!)) throw new UnauthorizedError()
 
   if (orgName) {
     org.organization_name = orgName
@@ -194,7 +192,7 @@ const sendOrganizationInvite = async (
     relations: ['user', 'organization'],
   })
 
-  if (!sharedUtils.isOrgAdminOrOwner(requester)) {
+  if (!sharedUtils.isOrgAdminOrOwner(requester!)) {
     throw new UnauthorizedError()
   }
 
@@ -237,7 +235,7 @@ const acceptOrganizationInvite = async (token: string, orgId: string) => {
     await userRepo.save(user)
   }
 
-  let organization = await orgRepo.findOne({
+  const organization = await orgRepo.findOne({
     where: {
       id: orgId,
     },
@@ -279,7 +277,7 @@ const getMembersInOrganization = async (id: string, orgId: string) => {
     relations: ['user', 'organization'],
   })
 
-  if (!sharedUtils.isOrgAdminOrOwner(requester)) {
+  if (!sharedUtils.isOrgAdminOrOwner(requester!)) {
     throw new UnauthorizedError()
   }
 
@@ -289,7 +287,7 @@ const getMembersInOrganization = async (id: string, orgId: string) => {
     },
     relations: ['user'],
   })
-  let result = members.map((member) => {
+  const result = members.map((member) => {
     return {
       name: member.display_name,
       role: member.role,
@@ -304,12 +302,12 @@ const getMembersInOrganization = async (id: string, orgId: string) => {
 const updateUserRole = async (
   targetUserId: string,
   orgId: string,
-  reqUserId: OrganizationUser
+  reqUserId: string
 ) => {
   if (!sharedUtils.isOrgAdminOrOwner(reqUserId)) {
     throw new ForbiddenError('Forbidden')
   }
-  let existingMembership = await orgUserRepo.findOne({
+  const existingMembership = await orgUserRepo.findOne({
     where: {
       user: { id: targetUserId },
       organization: { id: orgId },
@@ -327,7 +325,7 @@ const updateUserRole = async (
 
 const getUsersOrganizations = async(userId:string)=>{
 
-  let usersOrganizations = await orgUserRepo.find({
+  const usersOrganizations = await orgUserRepo.find({
     where:{
       user:{id: userId}
     }, 
@@ -336,7 +334,7 @@ const getUsersOrganizations = async(userId:string)=>{
     }
   })
 
-  for(let org in usersOrganizations){
+  for(const org in usersOrganizations){
     console.log(org)
   }
   return usersOrganizations

@@ -5,18 +5,19 @@ import { Log } from '../models/log-item.entity'
 import { OrganizationUser } from '../models/organization-user.entity'
 import { LogTag } from '../models/log-tag.entity'
 import sharedUtils from '../validation/utils/shared.utils'
-import { ApiKey } from '../models/api-key.entity'
+import { NextFunction, Request, Response } from 'express'
 
 const userRepo = AppDataSource.getRepository(User)
 const orgUserRepo = AppDataSource.getRepository(OrganizationUser)
 const orgServiceRepo = AppDataSource.getRepository(SubComponent)
 const logRepo = AppDataSource.getRepository(Log)
 const logTagRepo = AppDataSource.getRepository(LogTag)
-const apiKeyRepo = AppDataSource.getRepository(ApiKey)
 
-const createManualLogs = async (req: any, res: any) => {
-  const userId = req.id
-  const { orgId, serviceId } = req.params
+
+const createManualLogs = async (req: Request, res: Response) => {
+  const userId = req.id as string
+  const orgId = req.params.orgId as string
+  const serviceId = Number(req.params.serviceId)
   const { logMessage, logStatus, logTagName } = req.body
 
   try {
@@ -86,14 +87,16 @@ const createManualLogs = async (req: any, res: any) => {
     await logRepo.save(createManualLogs)
 
     return res.status(200).json({ message: `Logs created ` })
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.log(err)
   }
 }
 
-const getAllManualLogs = async (req: any, res: any) => {
+const getAllManualLogs = async (req: Request, res: Response, next:NextFunction) => {
 
-  const {userId, orgId, serviceId } = req.params
+  const userId = req.id as string
+  const orgId = req.params.orgId as string
+  const serviceId = Number(req.params.serviceId)
 
   try {
     const orgUser = await orgUserRepo.findOne({
@@ -121,7 +124,7 @@ const getAllManualLogs = async (req: any, res: any) => {
         .status(401)
         .json({ message: 'User not assigned to this service' })
 
-    let logs = await logRepo.find({
+    const logs = await logRepo.find({
       where: {
         sub_component: { id: serviceId },
       },
@@ -132,26 +135,31 @@ const getAllManualLogs = async (req: any, res: any) => {
     }
 
     return res.status(200).json({ message: logs })
-  } catch (err: any) {
-    console.log(err)
-    return res.status(500).json({ message: err.message })
+  } catch (err: unknown) {
+    next(err)
   }
 }
 
-const ingestLogs = async (req: any, res: any) => {
-  const { message, level } = req.body
+// const ingestLogs = async (req: Request, res: Response, next: NextFunction) => {
+//   const { message, level } = req.body
 
-  logRepo.save({
-    message,
-    level,
-    api_key: req.apiKey,
-    sub_component: req.subComponent,
-    created_by_user: req.apiKey.created_by_user,
-  })
+//   try{
+//        logRepo.save({
+//          message,
+//          level,
+//          api_key: req.apiKey,
+//          sub_component: req.subComponent,
+//          created_by_user: req.apiKey.created_by_user,
+//        })
 
-  req.apiKey.last_used_at = new Date()
-  await apiKeyRepo.save(req.apiKey)
-  return res.status(201).json({ message: 'Logs ingested' })
-}
+//        req.apiKey.last_used_at = new Date()
+//        await apiKeyRepo.save(req.apiKey)
+//        return res.status(201).json({ message: 'Logs ingested' })
+//   }catch(err:unknown){
+//     next(err)
+//   }
 
-export default { createManualLogs, getAllManualLogs, ingestLogs }
+ 
+// }
+
+export default { createManualLogs, getAllManualLogs, }

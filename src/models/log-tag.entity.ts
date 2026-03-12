@@ -22,7 +22,7 @@ export class LogTag {
 
   @Index()
   @Column()
-  organization_id: number
+  organization_id: string
 
   @ManyToMany(() => Log, (log) => log.tags)
   logs: Log[]

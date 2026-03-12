@@ -3,7 +3,7 @@ import type { MigrationInterface, QueryRunner } from "typeorm";
 export class AlterLogTableAddSubComponentId20260122120647 implements MigrationInterface{
     name?: string | undefined;
     transaction?: boolean | undefined;
-   public async up(queryRunner: QueryRunner): Promise<any> {
+   public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(
             `ALTER TABLE "log"
             ALTER COLUMN "sub_component_id" DROP NOT NULL
@@ -16,7 +16,7 @@ export class AlterLogTableAddSubComponentId20260122120647 implements MigrationIn
             `
         )
     }
-  public async  down(queryRunner: QueryRunner): Promise<any> {
+  public async  down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(
             `ALTER TABLE "log"  
             ALTER COLUMN "sub_component_id" SET NOT NULL`

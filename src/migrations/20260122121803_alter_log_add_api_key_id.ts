@@ -3,7 +3,7 @@ import type{ MigrationInterface, QueryRunner } from "typeorm";
 export class AlterLogAddApiKey20260122121803 implements MigrationInterface{
     // name?: string | undefined;
     // transaction?: boolean | undefined;
-   public async up(queryRunner: QueryRunner): Promise<any> {
+   public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(
             `ALTER TABLE "log"
             ALTER COLUMN api_key_id DROP NOT NULL`
@@ -16,7 +16,7 @@ export class AlterLogAddApiKey20260122121803 implements MigrationInterface{
             `
         )
     }
-   public async down(queryRunner: QueryRunner): Promise<any> {
+   public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(
             `ALTER TABLE "log"
             

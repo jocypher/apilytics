@@ -49,7 +49,7 @@ export class Log {
   api_key: ApiKey
 
   @Column({ type: 'jsonb', nullable: true })
-  metadata: Record<string, any>
+  metadata: Record<string, unknown>
 
   @ManyToMany(() => LogTag, (tag) => tag.logs)
   @JoinTable({

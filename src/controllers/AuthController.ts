@@ -8,9 +8,9 @@ const handleSignup = async (
   res: Response,
   next: NextFunction
 ) => {
-  let { username, email, password } = req.body
+  const { username, email, password } = req.body
   try {
-    let user = await authService.signup(
+    const user = await authService.signup(
       username,
       email,
       password
@@ -24,7 +24,7 @@ const handleSignup = async (
         username: username,
         createdAt: user.created_at,
       })
-  } catch (err: any) {
+  } catch (err: unknown) {
     next(err)
   }
 }
@@ -34,10 +34,10 @@ const handleSignin = async (
   res: Response,
   next: NextFunction
 ) => {
-  let { email, password } = req.body
+  const { email, password } = req.body
   const normalizedEmail = normalizeEmail(email)
   try {
-    let { id, token } = await authService.login(normalizedEmail, password)
+    const { id, token } = await authService.login(normalizedEmail, password)
     return res.status(200).json({
       id: id,
       jwt_token: token,
@@ -59,7 +59,7 @@ const forgotPassword = async (
       message: 'OTP code successfully sent',
       expiresIn: 'expires in 2 minutes',
     })
-  } catch (err: any) {
+  } catch (err: unknown) {
     next(err)
   }
 }
@@ -69,7 +69,7 @@ const verifyOtp = async (req: Request, res: Response, next: NextFunction) => {
   try {
     await authService.verifyOtp(otp, email)
     return res.status(200).json({ message: 'otp verified' })
-  } catch (err: any) {
+  } catch (err: unknown) {
     next(err)
   }
 }
@@ -102,7 +102,7 @@ const updateUsername = async (
   try {
     await authService.updateUsername(username, userId)
     return res.status(200).json({ message: 'update made successfully' })
-  } catch (err: any) {
+  } catch (err: unknown) {
     next(err)
   }
 }
@@ -122,7 +122,7 @@ const updateUserPassword = async (
       userId
     )
     return res.sendStatus(204)
-  } catch (err) {
+  } catch (err:unknown) {
     next(err)
   }
 }
@@ -136,7 +136,7 @@ const handleLogout = async (
   try {
     await authService.handleLogout(userId)
     return res.status(200).json({ message: 'Logout Successful' })
-  } catch (err: any) {
+  } catch (err: unknown) {
     next(err)
   }
 }
@@ -148,9 +148,9 @@ const getCurrentUser = async (
 ) => {
   const userId = req.id
   try {
-    let result = await authService.getCurrentUser(userId)
+    const result = await authService.getCurrentUser(userId)
     return res.status(200).json(result)
-  } catch (err: any) {
+  } catch (err: unknown) {
     next(err)
   }
 }
@@ -164,8 +164,7 @@ const deleteAccount = async (
   try {
    await authService.deleteAccount(userId)
     return res.sendStatus(200)
-  } catch (err) {
-    console.log(err)
+  } catch (err:unknown) {
     next(err)
   }
 }

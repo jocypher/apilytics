@@ -1,9 +1,8 @@
 import AppDataSource from '../configs/app-datasource.config'
-import { ApiKey } from '../models/api-key.entity'
 import { SubComponentUser } from '../models/org-service-user.entity'
 import { SubComponent } from '../models/organization-service.entity'
 import { OrganizationUser } from '../models/organization-user.entity'
-import { User } from '../models/user-model.entity'
+
 import {
   ForbiddenError,
   NotFoundError,
@@ -14,8 +13,7 @@ import sharedUtils from '../validation/utils/shared.utils'
 const orgUserRepo = AppDataSource.getRepository(OrganizationUser)
 const serviceRepo = AppDataSource.getRepository(SubComponent)
 const serviceUserRepo = AppDataSource.getRepository(SubComponentUser)
-const userRepo = AppDataSource.getRepository(User)
-const apiKeyRepo = AppDataSource.getRepository(ApiKey)
+
 
 const createService = async (userId: string, orgId: string, name: string) => {
   const organizationMember = await orgUserRepo.findOne({
@@ -74,7 +72,7 @@ const assignUserToService = async (
     throw new UnauthorizedError('User not part of the organization')
   }
 
-  let service = await serviceRepo.findOne({
+  const service = await serviceRepo.findOne({
     where: {
       id: serviceId,
       organization: { id: orgId },
@@ -98,19 +96,19 @@ const existingAssignment = await serviceUserRepo.findOne({
  if (existingAssignment) {
    throw new UnauthorizedError('user already assigned to service')
  }
-  let serviceUser = serviceUserRepo.create({
+  const serviceUser = serviceUserRepo.create({
     user: targetMembership.user,
     sub_component: service,
     assigned_by: requesterMembership?.user,
   })
 
-  let result = await serviceUserRepo.save(serviceUser)
+  const result = await serviceUserRepo.save(serviceUser)
 
   return result
 }
 
 
-const deleteService = async(userId: string, orgId:string, serviceId:number) =>{
+const deleteService = async(userId: string, orgId:string) =>{
     const orgMember = await orgUserRepo.findOne({
         where:{
             user: {id: userId},
@@ -128,5 +126,6 @@ const deleteService = async(userId: string, orgId:string, serviceId:number) =>{
 
 export default {
   createService,
-  assignUserToService
+  assignUserToService,
+  deleteService
 }

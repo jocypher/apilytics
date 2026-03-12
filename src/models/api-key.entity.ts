@@ -27,7 +27,7 @@ export class ApiKey {
   name: string
 
   @ManyToOne(() => SubComponent, (subc) => subc.api_keys)
-  @JoinColumn({ name: 'sub_component_id' })
+  @JoinColumn({ name: 'subcomponent' })
   subcomponent: SubComponent
 
   @ManyToOne(() => User, (user) => user.id)

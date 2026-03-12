@@ -10,8 +10,9 @@ const generateApiKey = (options: {
   return apiKey
 }
 
-const isOrgAdminOrOwner = (membership: OrganizationUser | null): boolean => {
-  return !!membership && ['owner', 'admin'].includes(membership.role)
+const isOrgAdminOrOwner = (membership: OrganizationUser | string): boolean => {
+  if (typeof membership === 'string') return false
+  return membership && ['owner', 'admin'].includes(membership.role)
 }
 
 const hashApiKey = async (key: string) => {
@@ -19,6 +20,10 @@ const hashApiKey = async (key: string) => {
   return hashedKey
 }
 
+function validatedParam(param: string | string[]): string {
+  if (Array.isArray(param)) throw new Error('Invalid param')
+  return param
+}
 const sensitiveName = (s: string) => s.replace(/\s+/g, '-').toLowerCase()
 
-export default { generateApiKey, isOrgAdminOrOwner, hashApiKey }
+export default { generateApiKey, isOrgAdminOrOwner, hashApiKey, validatedParam }

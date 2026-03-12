@@ -15,7 +15,7 @@ routes.post(
 )
 
 routes.post(
-  '/accept-invite/:userId',
+  '/accept-invite',
   validate(acceptOrganizationTokenSchema),
   organizationController.acceptOrganizationInvite
 )

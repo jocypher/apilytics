@@ -1,23 +1,7 @@
-import AppDataSource from '../configs/app-datasource.config'
-import { Organization } from '../models/organization-model.entity'
-import { User } from '../models/user-model.entity'
-import { OrganizationUser } from '../models/organization-user.entity'
 import organizationService from '../services/organization.service'
-import client from '../configs/redis.configs'
-import bcrypt from 'bcryptjs'
-import sharedUtils from '../validation/utils/shared.utils'
-import {
-  ForbiddenError,
-  NotFoundError,
-  UnauthorizedError,
-} from '../validation/utils/errors/errors'
-import emailService from '../services/email.service'
-import { Request, Response, NextFunction } from 'express'
-import { FindOptionsWhere, Not } from 'typeorm'
 
-const userRepo = AppDataSource.getRepository(User)
-const orgRepo = AppDataSource.getRepository(Organization)
-const orgUserRepo = AppDataSource.getRepository(OrganizationUser)
+import { Request, Response, NextFunction } from 'express'
+import sharedUtils from '../validation/utils/shared.utils'
 
 const createOrganization = async (
   req: Request,
@@ -27,7 +11,7 @@ const createOrganization = async (
   const { org_name } = req.body
   const id = req.id
   try {
-    let orgResult = await organizationService.createOrganization(org_name, id)
+    const orgResult = await organizationService.createOrganization(org_name, id)
     return res
       .status(201)
       .json({ message: 'organization created', org: orgResult })
@@ -43,10 +27,10 @@ const getAllOrganization = async (
 ) => {
   const id = req.id
   try {
-    let organizations = await organizationService.getAllOrganization(id)
+    const organizations = await organizationService.getAllOrganization(id)
     console.log(organizations)
     return res.status(200).json(organizations)
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error(err)
     next(err)
   }
@@ -58,9 +42,9 @@ const deleteOrganization = async (
   next: NextFunction
 ) => {
   const id = req.id
-  const orgId = req.params.id
+  const orgId = sharedUtils.validatedParam(req.params.id)
   try {
-    await organizationService.deleteOrganization(id, orgId as string)
+    await organizationService.deleteOrganization(id, orgId)
 
     return res
       .status(200)
@@ -76,13 +60,13 @@ const updateOrganization = async (
   res: Response,
   next: NextFunction
 ) => {
-  const orgId = req.params.id
+  const orgId = sharedUtils.validatedParam(req.params.orgId)
   const { name } = req.body
   const id = req.id
   try {
-    let org = await organizationService.updateOrganizationName(
+    const org = await organizationService.updateOrganizationName(
       id,
-      orgId as string,
+      orgId,
       name
     )
     return res
@@ -99,12 +83,12 @@ const getOrganizationById = async (
   res: Response,
   next: NextFunction
 ) => {
-  const orgId = req.params.id
+  const orgId = sharedUtils.validatedParam(req.params.id)
   const userId = req.id
 
   try {
-    let organization = await organizationService.getOrganizationById(
-      orgId as string,
+    const organization = await organizationService.getOrganizationById(
+      orgId,
       userId
     )
 
@@ -121,18 +105,17 @@ const sendInvitation = async (
   next: NextFunction
 ) => {
   const { email } = req.body
-  const { orgId } = req.params
+  const orgId = sharedUtils.validatedParam(req.params.id)
   const userId = req.id
 
   try {
     await organizationService.sendOrganizationInvite(
-      orgId as string,
+      orgId,
       userId,
       email
     )
-
     return res.status(200).json({ message: 'Invite sent successfully' })
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.log(err)
     next(err)
   }
@@ -147,35 +130,50 @@ const getMembersInOrganization = async (
   const { orgId } = req.params
 
   try {
-    let result = await organizationService.getMembersInOrganization(
+    const result = await organizationService.getMembersInOrganization(
       userId,
       orgId as string
     )
     return res.status(200).json(result)
-  } catch (err: any) {
+  } catch (err: unknown) {
     next(err)
-    return res.status(500).json({ message: err.message })
   }
 }
 
-const acceptOrganizationInvite = async (req: any, res: any, next: any) => {
+const acceptOrganizationInvite = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { token, orgId } = req.query
   try {
-    await organizationService.acceptOrganizationInvite(token, orgId)
+    await organizationService.acceptOrganizationInvite(
+      token as string,
+      orgId as string
+    )
     return res.status(200).json({ message: 'User accepted to organization' })
-  } catch (err: any) {
+  } catch (err: unknown) {
     next(err)
   }
 }
 
-const updateUserRole = async (req: any, res: any, next: any) => {
-  const { targetUserId, orgId } = req.params
+const updateUserRole = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const orgId =sharedUtils.validatedParam(req.params.orgId)
+  const targetUserId = sharedUtils.validatedParam(req.params.targetUserId)
   const reqUserId = req.id
 
   try {
-    await organizationService.updateUserRole(targetUserId, orgId, reqUserId)
+    await organizationService.updateUserRole(
+      targetUserId ,
+      orgId ,
+      reqUserId 
+    )
     return res.status(200).json({ message: 'role updated successfully' })
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error(err)
     next(err)
   }
@@ -185,10 +183,10 @@ const getUsersOrganizations = async (
   res: Response,
   next: NextFunction
 ) => {
-  try{
-  let orgs = await organizationService.getUsersOrganizations(req.id)
-  return res.status(200).json({orgs})
-  }catch(err){
+  try {
+    const orgs = await organizationService.getUsersOrganizations(req.id)
+    return res.status(200).json({ orgs })
+  } catch (err) {
     next(err)
   }
 }

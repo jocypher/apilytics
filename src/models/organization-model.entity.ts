@@ -23,9 +23,6 @@ export class Organization {
   @JoinColumn({ name: 'created_by_id' })
   created_by: User
 
-  @Column()
-  created_by_id: string
-
   @OneToMany(() => SubComponent, (components) => components.organization)
   sub_components: SubComponent[]
 

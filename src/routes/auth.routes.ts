@@ -9,7 +9,6 @@ import {
   loginSchema,
   registerSchema,
   resetPasswordSchema,
-  updateEmailSchema,
   updateUsernameSchema,
   updatePasswordSchema,
   verifyOtpSchema,

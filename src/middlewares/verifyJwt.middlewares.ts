@@ -1,9 +1,14 @@
-import jwt from 'jsonwebtoken'
+import jwt, { JwtPayload } from 'jsonwebtoken'
 import client from '../configs/redis.configs'
+
+interface MyJwtPayload extends JwtPayload{
+  id:string,
+  email:string
+}
 
 const verifyJwt = async (req: any, res: any, next: any) => {
   try {
-    let authHeader = req.headers.authorization || req.headers['Authorization']
+    const authHeader = req.headers.authorization 
     if (!authHeader || !authHeader?.startsWith('Bearer '))
       return res.status(401).json({ message: 'User is unauthorized' })
 
@@ -13,8 +18,8 @@ const verifyJwt = async (req: any, res: any, next: any) => {
     if (!secretKey) {
       throw new Error('Secret key is not defined in the environment variable')
     }
-    const decoded: any = jwt.verify(token, secretKey)
-
+    const decoded = jwt.verify(token, secretKey)  as MyJwtPayload
+ 
     const storedToken = await client.get(`auth:${decoded.id}`)
 
     if (!storedToken || storedToken !== token) {

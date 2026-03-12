@@ -31,7 +31,7 @@ routes.delete(
 )
 
 routes.get(
-  '/:orgId/:serviceId',
+  '/:orgId/:svcId',
   verifyJwtMiddlewares.verifyJwt,
   validate(serviceIdSchema),
   validate(organizationIdSchema),
