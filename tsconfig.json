@@ -12,7 +12,9 @@
     "emitDecoratorMetadata": true,
     "strictPropertyInitialization": false,
     "skipLibCheck": true,
-    "types": ["node"]
+    "types": ["node"],
+    "isolatedModules": true
+
   },
   "no-floating-promises": true,
   "include": ["src/**/*", "types/**/*"],

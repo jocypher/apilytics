@@ -273,6 +273,10 @@ const storeHashedOtpCode = async (otp: string): Promise<string> => {
   return hashedCode
 }
 
+const sum = (a:number , b:number) =>{
+    return a + b 
+}
+
 export default {
   generateOTPCode,
   storeHashedOtpCode,
@@ -286,4 +290,5 @@ export default {
   handleLogout,
   getCurrentUser,
   deleteAccount,
+  sum
 }

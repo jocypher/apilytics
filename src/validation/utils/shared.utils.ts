@@ -20,7 +20,7 @@ const hashApiKey = async (key: string) => {
   return hashedKey
 }
 
-function validatedParam(param: string | string[]): string {
+const validatedParam = (param: string | string[]): string => {
   if (Array.isArray(param)) throw new Error('Invalid param')
   return param
 }

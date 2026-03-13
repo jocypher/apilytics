@@ -1,8 +1,7 @@
 import express from 'express'
 import logsController from '../controllers/LogController'
 import verifyJwtMiddlewares from '../middlewares/verifyJwt.middlewares'
-import { verifyApiKey } from '../middlewares/verifyApi.middlewares'
-import { createManualLogsSchema, ingestLogsSchema } from '../validation/schemas/log.schema'
+import { createManualLogsSchema,  } from '../validation/schemas/log.schema'
 import validate from '../middlewares/validation.middleware'
 import { userIdSchema } from '../validation/schemas/user.schema'
 import { organizationIdSchema } from '../validation/schemas/organization.schema'
@@ -25,11 +24,11 @@ routes.get(
   logsController.getAllManualLogs
 )
 
-routes.post(
-  '/logs/ingest',
-  validate(ingestLogsSchema),
-  verifyApiKey,
-  logsController.ingestLogs
-)
+// routes.post(
+//   '/logs/ingest',
+//   validate(ingestLogsSchema),
+//   verifyApiKey,
+//   logsController.ingestLogs
+// )
 
 export default routes
