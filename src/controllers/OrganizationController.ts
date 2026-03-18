@@ -127,12 +127,12 @@ const getMembersInOrganization = async (
   next: NextFunction
 ) => {
   const userId = req.id
-  const { orgId } = req.params
+  const orgId  = sharedUtils.validatedParam(req.params.orgId)
 
   try {
     const result = await organizationService.getMembersInOrganization(
       userId,
-      orgId as string
+      orgId
     )
     return res.status(200).json(result)
   } catch (err: unknown) {
@@ -190,6 +190,7 @@ const getUsersOrganizations = async (
     next(err)
   }
 }
+
 
 export default {
   createOrganization,

@@ -15,18 +15,25 @@ import {
 } from '../validation/schemas/user.schema'
 import rateLimiter from '../middlewares/ratelimiter.middleware'
 import { rateLimitKeys } from '../validation/constants/rate_limit_keys'
+import passport from '../configs/passport'
 
-routes.post(
-  '/register',
-  validate(registerSchema),
-  authController.handleSignup
-)
+routes.post('/register', validate(registerSchema), authController.handleSignup)
 
 routes.post(
   '/signin',
   validate(loginSchema),
   rateLimiter(10, 600, rateLimitKeys.signin),
   authController.handleSignin
+)
+
+routes.get(
+  '/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] })
+)
+routes.get(
+  '/google/callback',
+  passport.authenticate('google', {session:false}),
+  authController.googleCallback
 )
 
 routes.post(

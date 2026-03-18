@@ -1,7 +1,7 @@
 import authService from '../services/auth.service'
 import normalizeEmail from 'normalize-email'
 import { Request, Response, NextFunction } from 'express'
-
+import jwt from 'jsonwebtoken'
 
 const handleSignup = async (
   req: Request,
@@ -168,6 +168,21 @@ const deleteAccount = async (
     next(err)
   }
 }
+
+const googleCallback = async(req:any, res:any)=>{
+  const user = req.user
+
+  const accessToken = jwt.sign({
+    id:user.id,
+    email: normalizeEmail(user.email)
+  },
+   process.env.JWT_SECRET_KEY!,
+   {expiresIn: '1h' }
+)
+
+  return res.status(201).json({user, accessToken})
+}
+
 export default {
   handleSignup,
   handleSignin,
@@ -179,4 +194,5 @@ export default {
   handleLogout,
   getCurrentUser,
   deleteAccount,
+  googleCallback
 }

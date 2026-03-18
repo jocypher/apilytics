@@ -12,6 +12,8 @@ import errorLogger from './middlewares/errorlog.middleware'
 import errorHandler from './middlewares/errorhandler.middlewares'
 import helmet from 'helmet'
 import cors from 'cors'
+import passport from './configs/passport'
+import session from 'express-session'
 const app = express()
 
 const PORT = process.env.SERVER_PORT
@@ -20,6 +22,14 @@ app.use(express.urlencoded({ extended: false }))
 app.use(helmet())
 app.use(cors())
 app.use(reqLogger)
+app.use(session({
+  secret:'secretKey',
+  resave:false,
+  saveUninitialized:true
+}))
+
+app.use(passport.initialize())
+app.use(passport.session())
 
 
 AppDataSource.initialize()

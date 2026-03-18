@@ -61,6 +61,15 @@ const setInviteToken = async (
   )
 }
 
+
+const storeApiKey = async(
+  hashed_apiKey: string,
+  api_key: string
+)=>{
+  await client.set(redisKey.apiKey(api_key), hashed_apiKey, {
+    EX: 60 * 60 * 24,
+  })
+}
 export default {
   setAuthId,
   setEmailOtp,
@@ -71,5 +80,6 @@ export default {
   deleteAuthId,
   deleteEmailOtp,
   deleteResetPasswordToken,
-  setInviteToken
+  setInviteToken,
+  storeApiKey
 }

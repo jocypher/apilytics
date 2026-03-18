@@ -277,6 +277,25 @@ const sum = (a:number , b:number) =>{
     return a + b 
 }
 
+const handleGoogleService = async(profile:any)=>{
+  const email = profile.emails[0].value
+
+  let user = await userRepo.findOne({
+    where :{
+      email:email
+    }
+  })
+  if(!user){
+   user =  userRepo.create({
+      username: profile.displayName,
+      email: email,
+      password_hash: ''
+    })
+    await userRepo.save(user)
+  }
+  return user
+}
+
 export default {
   generateOTPCode,
   storeHashedOtpCode,
@@ -290,5 +309,6 @@ export default {
   handleLogout,
   getCurrentUser,
   deleteAccount,
-  sum
+  sum,
+  handleGoogleService
 }

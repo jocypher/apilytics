@@ -48,38 +48,12 @@ const deleteService = async (req: any, res: any, next: any) => {
   const orgId = sharedUtils.validatedParam(req.params.orgId)
   const  serviceId  =Number(req.params.svcId)
   try {
-    const orgMember = await orgUserRepo.findOne({
-      where: {
-        user: { id: userId },
-        organization: { id: orgId },
-      },
-      relations: ['user', 'organization'],
-    })
-    if (!orgMember) {
-      return res.status(403).json({ message: 'Not a member' })
-    }
-    if (!sharedUtils.isOrgAdminOrOwner(orgMember))
-      return res.status(401).json({ message: 'Unauthorized' })
-
-    const foundService = await serviceRepo.findOne({
-      where: { id: serviceId, organization: { id: orgId } },
-      relations: ['organization'],
-    })
-
-    if (!foundService)
-      return res.status(404).json({ message: 'Service not found' })
-
-    await serviceUserRepo.delete({
-      sub_component: { id: serviceId },
-    })
-
-    await serviceRepo.delete({ id: serviceId })
+    await organizationServiceService.deleteService(userId, orgId, serviceId)
 
     return res.status(200).json({ message: 'Service deleted successfully' })
   } catch (err) {
     console.error(err)
     next(err)
-    return res.status(500).json({ message: `Server error: ${err}` })
   }
 }
 
