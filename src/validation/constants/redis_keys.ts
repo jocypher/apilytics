@@ -3,5 +3,6 @@ export const redisKey = {
   otp: (email: string) => `otp:${email}`,
   reset: (email: string) => `reset:password:${email}`,
   invite: (token: string) => `org_invite:${token}`,
-  apiKey: (key: string) => `api_key:${key}`
+  apiKey: (key: string) => `api_key:${key}`,
+  refreshKey: (key: string)=>`refresh_token:${key}`
 }

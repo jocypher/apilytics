@@ -3,17 +3,26 @@
 import client from '../configs/redis.configs'
 import { redisKey } from '../validation/constants/redis_keys'
 
-const setAuthId = async (id: string, token: string) => {
+const setAccessToken = async (id: string, token: string) => {
   await client.set(redisKey.auth(id), token, {
     EX: 60 * 60,
   })
 }
+const setRefreshToken = async(id:string, refreshToken:string)=>{
+  await client.set(redisKey.refreshKey(id), refreshToken, {
+    EX: 604800
+  })
+}
 
-const getAuthId = async (id: string) => {
+const getAccessToken = async (id: string) => {
   return await client.get(redisKey.auth(id))
 }
 
-const deleteAuthId = async (id: string) => {
+const getRefreshToken = async(id:string)=>{
+  return await client.get(redisKey.refreshKey(id))
+}
+
+const deleteAccessToken = async (id: string) => {
   await client.del(redisKey.auth(id))
 }
 const setEmailOtp = async (email: string, hashedOtp: string) => {
@@ -71,13 +80,15 @@ const storeApiKey = async(
   })
 }
 export default {
-  setAuthId,
+  setAccessToken,
   setEmailOtp,
   setResetPasswordToken,
-  getAuthId,
+  setRefreshToken,
+  getAccessToken,
   getEmailOtp,
   getResetPasswordToken,
-  deleteAuthId,
+  getRefreshToken,
+  deleteAccessToken,
   deleteEmailOtp,
   deleteResetPasswordToken,
   setInviteToken,

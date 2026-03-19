@@ -26,6 +26,9 @@ export class User {
   @CreateDateColumn()
   created_at: Date
 
+  @Column({nullable: true})
+  refreshKey: string
+
   @OneToMany(() => Organization, (org) => org.created_by)
   organizations: Organization[]
 

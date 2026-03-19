@@ -37,15 +37,24 @@ const handleSignin = async (
   const { email, password } = req.body
   const normalizedEmail = normalizeEmail(email)
   try {
-    const { id, token } = await authService.login(normalizedEmail, password)
+    const { id, accessToken, refreshToken } = await authService.login(normalizedEmail, password)
     return res.status(200).json({
       id: id,
-      jwt_token: token,
+      accessToken: accessToken,
+      refreshToken:refreshToken
     })
   } catch (err) {
     next(err)
   }
 }
+
+// const handleRefreshToken = async(
+//   req:Request,
+//   res:Response,
+//   next:NextFunction
+// ) =>{
+
+// }
 
 const forgotPassword = async (
   req: Request,

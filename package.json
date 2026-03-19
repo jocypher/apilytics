@@ -19,6 +19,7 @@
     "lint": "eslint .",
     "prepare": "husky"
   },
+  
   "author": "",
   "license": "ISC",
   "dependencies": {

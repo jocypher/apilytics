@@ -15,9 +15,9 @@ const appDataSource = new DataSource({
   username: process.env.USERNAME,
   password: process.env.PASSWORD,
   host: process.env.HOST,
-  port: Number(process.env.DB_PORT),
+  port: Number(process.env.DB_PORT)||5050,
   database: process.env.DB_NAME,
-  synchronize: true,
+  synchronize: false,
   extra: {
     max: 5,
     connectionTimeoutMillis: 10000,

@@ -61,18 +61,30 @@ const login = async (email: string, password: string) => {
     throw new BadRequestError('Invalid credentials')
   }
 
-  const token = jwt.sign(
+  const accessToken = jwt.sign(
     {
       id: user.id,
       email: normalizedEmail(email),
     },
-    process.env.JWT_SECRET_KEY!,
+    process.env.ACCESS_TOKEN!,
     { expiresIn: '1h' }
   )
 
-  await redisService.setAuthId(user.id, token)
+  const refreshToken = jwt.sign(
+    {
+      id: user.id,
+      email: normalizedEmail(email),
+    },
+    process.env.REFRESH_TOKEN!,
+    { expiresIn: '7d' }
+  )
 
-  return { id: user.id, token }
+  await userRepo.update(user.id, { refreshKey: refreshToken })
+
+  await redisService.setAccessToken(user.id, accessToken)
+  await redisService.setRefreshToken(user.id, refreshToken)
+
+  return { id: user.id, accessToken: accessToken, refreshToken: refreshToken }
 }
 
 const forgotPassword = async (email: string) => {
@@ -142,7 +154,24 @@ const resetPassword = async (email: string, newPassword: string) => {
   await userRepo.update(user.id, { password_hash: hashPassword })
 
   await redisService.deleteResetPasswordToken(email)
-  await redisService.deleteAuthId(user.id)
+  await redisService.deleteAccessToken(user.id)
+}
+
+const handleRefreshToken = async(token: string, )=>{
+  if(!token){
+    throw new UnauthorizedError("The refresh token is not allowed")
+  }
+
+  const user = jwt.verify(token, process.env.REFRESH_TOKEN!)
+  const accessToken = jwt.sign(
+    {
+      id: user,
+      email: normalizedEmail("user"),
+    },
+    process.env.ACCESS_TOKEN!,
+    { expiresIn: '1h' }
+  )
+  return accessToken
 }
 
 const updateUsername = async (username: string, userId: string) => {
@@ -213,12 +242,12 @@ const handleLogout = async (userId: string) => {
     throw new UnauthorizedError()
   }
 
-  const token = await redisService.getAuthId(userId)
+  const token = await redisService.getAccessToken(userId)
   if (!token) {
     throw new ForbiddenError()
   }
 
-  await redisService.deleteAuthId(userId)
+  await redisService.deleteAccessToken(userId)
 }
 
 const getCurrentUser = async (userId: string) => {
@@ -245,13 +274,13 @@ const deleteAccount = async (userId: string) => {
   if (!user) {
     throw new UnauthorizedError()
   }
-  const token = await redisService.getAuthId(userId)
+  const token = await redisService.getAccessToken(userId)
   if (!token) {
     throw new UnauthorizedError()
   }
 
   await Promise.all([
-    redisService.deleteAuthId(userId),
+    redisService.deleteAccessToken(userId),
     userRepo.delete({
       id: userId,
     }),
@@ -273,23 +302,23 @@ const storeHashedOtpCode = async (otp: string): Promise<string> => {
   return hashedCode
 }
 
-const sum = (a:number , b:number) =>{
-    return a + b 
+const sum = (a: number, b: number) => {
+  return a + b
 }
 
-const handleGoogleService = async(profile:any)=>{
+const handleGoogleService = async (profile: any) => {
   const email = profile.emails[0].value
 
   let user = await userRepo.findOne({
-    where :{
-      email:email
-    }
+    where: {
+      email: email,
+    },
   })
-  if(!user){
-   user =  userRepo.create({
+  if (!user) {
+    user = userRepo.create({
       username: profile.displayName,
       email: email,
-      password_hash: ''
+      password_hash: '',
     })
     await userRepo.save(user)
   }
@@ -310,5 +339,6 @@ export default {
   getCurrentUser,
   deleteAccount,
   sum,
-  handleGoogleService
+  handleGoogleService,
+  handleRefreshToken
 }
