@@ -12,6 +12,7 @@ import {
   updateUsernameSchema,
   updatePasswordSchema,
   verifyOtpSchema,
+  refreshTokenValidation,
 } from '../validation/schemas/user.schema'
 import rateLimiter from '../middlewares/ratelimiter.middleware'
 import { rateLimitKeys } from '../validation/constants/rate_limit_keys'
@@ -32,10 +33,15 @@ routes.get(
 )
 routes.get(
   '/google/callback',
-  passport.authenticate('google', {session:false}),
+  passport.authenticate('google', { session: false }),
   authController.googleCallback
 )
 
+routes.post(
+  '/refresh',
+  validate(refreshTokenValidation),
+  authController.handleRefreshToken
+)
 routes.post(
   '/forgot-password',
   rateLimiter(5, 120, rateLimitKeys.forgotPassword),

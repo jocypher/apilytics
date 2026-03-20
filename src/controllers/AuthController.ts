@@ -10,20 +10,14 @@ const handleSignup = async (
 ) => {
   const { username, email, password } = req.body
   try {
-    const user = await authService.signup(
-      username,
-      email,
-      password
-    )
-    return res
-      .status(201)
-      .json({
-        message: 'user account created',
-        email: email,
-        id: user.id,
-        username: username,
-        createdAt: user.created_at,
-      })
+    const user = await authService.signup(username, email, password)
+    return res.status(201).json({
+      message: 'user account created',
+      email: email,
+      id: user.id,
+      username: username,
+      createdAt: user.created_at,
+    })
   } catch (err: unknown) {
     next(err)
   }
@@ -37,24 +31,29 @@ const handleSignin = async (
   const { email, password } = req.body
   const normalizedEmail = normalizeEmail(email)
   try {
-    const { id, accessToken, refreshToken } = await authService.login(normalizedEmail, password)
+    const { id, accessToken, refreshToken } = await authService.login(
+      normalizedEmail,
+      password
+    )
     return res.status(200).json({
       id: id,
       accessToken: accessToken,
-      refreshToken:refreshToken
+      refreshToken: refreshToken,
     })
   } catch (err) {
     next(err)
   }
 }
 
-// const handleRefreshToken = async(
-//   req:Request,
-//   res:Response,
-//   next:NextFunction
-// ) =>{
+const handleRefreshToken = async (req: Request, res: Response) => {
+  const { token } = req.body
+  const { accessToken, refreshToken } =
+    await authService.handleRefreshToken(token)
 
-// }
+  return res
+    .status(200)
+    .json({ accessToken: accessToken, refreshToken: refreshToken })
+}
 
 const forgotPassword = async (
   req: Request,
@@ -131,7 +130,7 @@ const updateUserPassword = async (
       userId
     )
     return res.sendStatus(204)
-  } catch (err:unknown) {
+  } catch (err: unknown) {
     next(err)
   }
 }
@@ -171,25 +170,26 @@ const deleteAccount = async (
 ) => {
   const userId = req.id
   try {
-   await authService.deleteAccount(userId)
+    await authService.deleteAccount(userId)
     return res.sendStatus(200)
-  } catch (err:unknown) {
+  } catch (err: unknown) {
     next(err)
   }
 }
 
-const googleCallback = async(req:any, res:any)=>{
+const googleCallback = async (req: any, res: any) => {
   const user = req.user
 
-  const accessToken = jwt.sign({
-    id:user.id,
-    email: normalizeEmail(user.email)
-  },
-   process.env.JWT_SECRET_KEY!,
-   {expiresIn: '1h' }
-)
+  const accessToken = jwt.sign(
+    {
+      id: user.id,
+      email: normalizeEmail(user.email),
+    },
+    process.env.JWT_SECRET_KEY!,
+    { expiresIn: '1h' }
+  )
 
-  return res.status(201).json({user, accessToken})
+  return res.status(201).json({ user, accessToken })
 }
 
 export default {
@@ -203,5 +203,6 @@ export default {
   handleLogout,
   getCurrentUser,
   deleteAccount,
-  googleCallback
+  googleCallback,
+  handleRefreshToken,
 }

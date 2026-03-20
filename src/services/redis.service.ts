@@ -8,23 +8,15 @@ const setAccessToken = async (id: string, token: string) => {
     EX: 60 * 60,
   })
 }
-const setRefreshToken = async(id:string, refreshToken:string)=>{
-  await client.set(redisKey.refreshKey(id), refreshToken, {
-    EX: 604800
-  })
-}
 
 const getAccessToken = async (id: string) => {
   return await client.get(redisKey.auth(id))
 }
 
-const getRefreshToken = async(id:string)=>{
-  return await client.get(redisKey.refreshKey(id))
-}
-
 const deleteAccessToken = async (id: string) => {
   await client.del(redisKey.auth(id))
 }
+
 const setEmailOtp = async (email: string, hashedOtp: string) => {
   await client.set(redisKey.otp(email), hashedOtp, {
     EX: 60 * 10,
@@ -57,7 +49,7 @@ const setInviteToken = async (
   hashToken: string,
   email: string,
   orgId: string,
-  id:string
+  id: string
 ) => {
   await client.set(
     redisKey.invite(hashToken),
@@ -70,11 +62,7 @@ const setInviteToken = async (
   )
 }
 
-
-const storeApiKey = async(
-  hashed_apiKey: string,
-  api_key: string
-)=>{
+const storeApiKey = async (hashed_apiKey: string, api_key: string) => {
   await client.set(redisKey.apiKey(api_key), hashed_apiKey, {
     EX: 60 * 60 * 24,
   })
@@ -83,14 +71,13 @@ export default {
   setAccessToken,
   setEmailOtp,
   setResetPasswordToken,
-  setRefreshToken,
+
+  setInviteToken,
+  storeApiKey,
   getAccessToken,
   getEmailOtp,
   getResetPasswordToken,
-  getRefreshToken,
   deleteAccessToken,
   deleteEmailOtp,
   deleteResetPasswordToken,
-  setInviteToken,
-  storeApiKey
 }
