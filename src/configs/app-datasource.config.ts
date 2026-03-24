@@ -12,10 +12,10 @@ const isProduction = process.env.NODE_ENV == 'production'
 
 const appDataSource = new DataSource({
   type: 'postgres',
-  username: process.env.USERNAME,
-  password: process.env.PASSWORD,
+  username: process.env.DB_USERNAME,
+  password: process.env.DB_PASSWORD,
   host: process.env.HOST,
-  port: Number(process.env.DB_PORT)||5050,
+  port: Number(process.env.DB_PORT)||5432,
   database: process.env.DB_NAME,
   synchronize: false,
   extra: {

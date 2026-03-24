@@ -17,6 +17,6 @@
 
   },
   "no-floating-promises": true,
-  "include": ["src/**/*", "types/**/*"],
-  "typeRoots": ["./node_modules/@types", "./types"]
+  "include": ["src/**/*"],
+  "typeRoots": ["./node_modules/@types", "./src/types"]
 }

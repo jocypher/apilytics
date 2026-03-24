@@ -2,7 +2,7 @@
   "name": "webapiloggersystem",
   "version": "1.0.0",
   "description": "building a web api for logging issues",
-  "main": "index.js",
+  "main": "dist/server.js",
   "lint-staged": {
     "*.{js,ts,jsx,tsx,json,md}": [
       "prettier --write",
@@ -11,7 +11,8 @@
   },
   "scripts": {
     "test": "jest",
-    "dev": "nodemon dist/server.js",
+    "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
+    "start": "node dist/server.js",
     "typeorm": "typeorm-ts-node-commonjs",
     "migration:generate": "npm run typeorm -- migration:generate -d src/configs/app-datasource.config",
     "migration:run": "npm run typeorm -- migration:run -d src/configs/app-datasource.config",

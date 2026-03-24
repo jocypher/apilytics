@@ -212,8 +212,8 @@ const getAssignedUserForService = async(userId: string, orgId: string, serviceId
   }
 
   const users = assignments.map((a:SubComponentUser)=>a.user)
-
-  return {page, limit, total, users}
+ const result = {page,limit, total, users }
+  return result
   
 }
 
@@ -277,8 +277,10 @@ const generateApiKey = async(userId: string, orgId:string, serviceId: number)=>{
      await redisService.storeApiKey(hashApiKey,apiKey)
  
      await apiKeyRepo.save(createApiKey)
-
+     return apiKey
 }
+
+
 
 export default {
   createService,

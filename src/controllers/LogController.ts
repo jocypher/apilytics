@@ -23,68 +23,8 @@ const createManualLogs = async (req: Request, res: Response) => {
   try {
    
 
-    const orgUser = await orgUserRepo.findOne({
-      where: {
-        organization: { id: orgId },
-        user: { id: userId },
-      },
-      relations: ['user', 'organization'],
-    })
-    if (!orgUser) {
-      return res.status(404).json({ message: 'User Not found' })
-    }
 
-    if (!sharedUtils.isOrgAdminOrOwner(orgUser)) {
-      return res.status(401).json({ message: 'Forbidden' })
-    }
 
-    const user = await userRepo.findOne({
-      where: {
-        id: userId,
-      },
-    })
-    if (!user) {
-      return res.status(404).json({ message: 'User Not found' })
-    }
-
-    const orgService = await orgServiceRepo.findOne({
-      where: {
-        id: serviceId,
-        organization: { id: orgId },
-      },
-      relations: ['organization'],
-    })
-
-    if (!orgService)
-      return res
-        .status(401)
-        .json({ message: "The organization with the service isn't available" })
-
-    let tag = await logTagRepo.findOne({
-           where: {
-             tag_name: logTagName,
-             organization_id: orgId,
-           },
-         })
-
-         if (!tag) {
-           tag = logTagRepo.create({
-             tag_name: logTagName,
-             description: '',
-             organization_id: orgId,
-           })
-           await logTagRepo.save(tag)
-         }
-
-    const createManualLogs = logRepo.create({
-      message: logMessage,
-      logLevel: logStatus,
-      tags: [tag],
-      created_by: orgUser.user,
-      sub_component: orgService,
-    })
-
-    await logRepo.save(createManualLogs)
 
     return res.status(200).json({ message: `Logs created ` })
   } catch (err: unknown) {
