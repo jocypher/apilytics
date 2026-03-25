@@ -14,6 +14,7 @@ import helmet from 'helmet'
 import cors from 'cors'
 import passport from './configs/passport'
 import session from 'express-session'
+import {requestLogger} from './middlewares/requestLogger.middlewares'
 const app = express()
 
 const PORT = process.env.SERVER_PORT
@@ -21,6 +22,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 app.use(helmet())
 app.use(cors())
+app.use(requestLogger)
 app.use(reqLogger)
 app.use(session({
   secret:'secretKey',
