@@ -5,7 +5,7 @@ services:
     ports:
       - "4000:4000"
     env_file:
-      - .env.docker
+      - .env
     depends_on:
       - db
       - redis
@@ -19,9 +19,9 @@ services:
     container_name: apilytics_db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: apilytics_user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: myappdb
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
