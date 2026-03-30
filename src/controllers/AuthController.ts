@@ -105,7 +105,7 @@ const updateUsername = async (
   next: NextFunction
 ) => {
   const { username } = req.body
-  const userId = req.id
+  const userId = (req as any).id
 
   try {
     await authService.updateUsername(username, userId)
@@ -121,7 +121,7 @@ const updateUserPassword = async (
   next: NextFunction
 ) => {
   const { currentPassword, newPassword, confirmPassword } = req.body
-  const userId = req.id
+  const userId = (req as any).id
   try {
     await authService.updateUserPassword(
       currentPassword,
@@ -140,7 +140,7 @@ const handleLogout = async (
   res: Response,
   next: NextFunction
 ) => {
-  const userId = req.id
+  const userId = (req as any).id
   try {
     await authService.handleLogout(userId)
     return res.status(200).json({ message: 'Logout Successful' })
@@ -154,7 +154,7 @@ const getCurrentUser = async (
   res: Response,
   next: NextFunction
 ) => {
-  const userId = req.id
+  const userId = (req as any).id
   try {
     const result = await authService.getCurrentUser(userId)
     return res.status(200).json(result)
@@ -168,7 +168,7 @@ const deleteAccount = async (
   res: Response,
   next: NextFunction
 ) => {
-  const userId = req.id
+  const userId = (req as any).id
   try {
     await authService.deleteAccount(userId)
     return res.sendStatus(200)

@@ -9,7 +9,7 @@ const createOrganization = async (
   next: NextFunction
 ) => {
   const { org_name } = req.body
-  const id = req.id
+  const id = (req as any).id
   try {
     const orgResult = await organizationService.createOrganization(org_name, id)
     return res
@@ -25,7 +25,7 @@ const getAllOrganization = async (
   res: Response,
   next: NextFunction
 ) => {
-  const id = req.id
+  const id = (req as any).id
   try {
     const organizations = await organizationService.getAllOrganization(id)
     console.log(organizations)
@@ -41,7 +41,7 @@ const deleteOrganization = async (
   res: Response,
   next: NextFunction
 ) => {
-  const id = req.id
+  const id = (req as any).id
   const orgId = sharedUtils.validatedParam(req.params.id)
   try {
     await organizationService.deleteOrganization(id, orgId)
@@ -62,7 +62,7 @@ const updateOrganization = async (
 ) => {
   const orgId = sharedUtils.validatedParam(req.params.orgId)
   const { name } = req.body
-  const id = req.id
+  const id = (req as any).id
   try {
     const org = await organizationService.updateOrganizationName(
       id,
@@ -84,7 +84,7 @@ const getOrganizationById = async (
   next: NextFunction
 ) => {
   const orgId = sharedUtils.validatedParam(req.params.id)
-  const userId = req.id
+  const userId = (req as any).id
 
   try {
     const organization = await organizationService.getOrganizationById(
@@ -106,7 +106,7 @@ const sendInvitation = async (
 ) => {
   const { email } = req.body
   const orgId = sharedUtils.validatedParam(req.params.id)
-  const userId = req.id
+  const userId = (req as any).id
 
   try {
     await organizationService.sendOrganizationInvite(
@@ -126,7 +126,7 @@ const getMembersInOrganization = async (
   res: Response,
   next: NextFunction
 ) => {
-  const userId = req.id
+  const userId = (req as any).id
   const orgId  = sharedUtils.validatedParam(req.params.orgId)
 
   try {
@@ -164,7 +164,7 @@ const updateUserRole = async (
 ) => {
   const orgId =sharedUtils.validatedParam(req.params.orgId)
   const targetUserId = sharedUtils.validatedParam(req.params.targetUserId)
-  const reqUserId = req.id
+  const reqUserId = (req as any).id
 
   try {
     await organizationService.updateUserRole(
@@ -184,7 +184,9 @@ const getUsersOrganizations = async (
   next: NextFunction
 ) => {
   try {
-    const orgs = await organizationService.getUsersOrganizations(req.id)
+    const orgs = await organizationService.getUsersOrganizations(
+      (req as any).id
+    )
     return res.status(200).json({ orgs })
   } catch (err) {
     next(err)

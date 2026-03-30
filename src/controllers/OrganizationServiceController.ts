@@ -1,21 +1,11 @@
-import AppDataSource from '../configs/app-datasource.config'
-import { OrganizationUser } from '../models/organization-user.entity'
-import { SubComponent } from '../models/organization-service.entity'
-import { SubComponentUser } from '../models/org-service-user.entity'
 import sharedUtils from '../validation/utils/shared.utils'
-import { User } from '../models/user-model.entity'
-import { ApiKey } from '../models/api-key.entity'
 import organizationServiceService from '../services/organization-service.service'
 import { NextFunction, Request,Response} from 'express'
 
-const orgUserRepo = AppDataSource.getRepository(OrganizationUser)
-const serviceRepo = AppDataSource.getRepository(SubComponent)
-const serviceUserRepo = AppDataSource.getRepository(SubComponentUser)
-const userRepo = AppDataSource.getRepository(User)
-const apiKeyRepo = AppDataSource.getRepository(ApiKey)
+
 
 const createService = async (req: Request, res: Response, next: NextFunction) => {
-  const userId = req.id
+  const userId = (req as any).id
   const orgId  = sharedUtils.validatedParam(req.params.orgId)
   const {name} = req.body
 
@@ -28,7 +18,7 @@ const createService = async (req: Request, res: Response, next: NextFunction) =>
 }
 
 const assignUserToService = async (req: Request, res: Response, next: NextFunction) => {
-  const userId = req.id
+  const userId = (req as any).id
   const orgId = sharedUtils.validatedParam(req.params.orgId)
   const serviceId = Number(req.params.serviceId)
   const  roleToChangeId =sharedUtils.validatedParam(req.params.roleToChangeId)
@@ -44,7 +34,7 @@ const assignUserToService = async (req: Request, res: Response, next: NextFuncti
 
 
 const deleteService = async (req: Request, res: Response, next: NextFunction) => {
-  const userId = req.id
+  const userId = (req as any).id
   const orgId = sharedUtils.validatedParam(req.params.orgId)
   const  serviceId  =Number(req.params.svcId)
   try {
@@ -58,7 +48,7 @@ const deleteService = async (req: Request, res: Response, next: NextFunction) =>
 }
 
 const getServiceById = async (req: Request, res: Response, next: NextFunction) => {
-  const requesterId = req.id
+  const requesterId = (req as any).id
     const orgId = sharedUtils.validatedParam(req.params.orgId)
     const serviceId = Number(req.params.svcId)
   try {
@@ -72,7 +62,7 @@ const getServiceById = async (req: Request, res: Response, next: NextFunction) =
 }
 
 const getAssignedUserForService = async (req: any, res: any, next: any) => {
-  const userId = req.id
+  const userId = (req as any).id
     const orgId = sharedUtils.validatedParam(req.params.orgId)
     const serviceId = Number(req.params.svcId)
   const page = Number(req.query.page) || 1
@@ -93,7 +83,7 @@ const getAssignedUserForService = async (req: any, res: any, next: any) => {
 
 
 const generateApiKey = async (req: any, res: any, next: any) => {
-  const userId = req.id
+  const userId = (req as any).id
       const orgId = sharedUtils.validatedParam(req.params.orgId)
       const serviceId = Number(req.params.svcId)
 

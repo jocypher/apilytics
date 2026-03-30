@@ -1,40 +1,38 @@
-import { User } from '../models/user-model.entity'
+
 import AppDataSource from '../configs/app-datasource.config'
 import { SubComponent } from '../models/organization-service.entity'
 import { Log } from '../models/log-item.entity'
 import { OrganizationUser } from '../models/organization-user.entity'
-import { LogTag } from '../models/log-tag.entity'
-import sharedUtils from '../validation/utils/shared.utils'
 import { NextFunction, Request, Response } from 'express'
 
-const userRepo = AppDataSource.getRepository(User)
+
 const orgUserRepo = AppDataSource.getRepository(OrganizationUser)
 const orgServiceRepo = AppDataSource.getRepository(SubComponent)
 const logRepo = AppDataSource.getRepository(Log)
-const logTagRepo = AppDataSource.getRepository(LogTag)
 
 
-const createManualLogs = async (req: Request, res: Response) => {
-  const userId = req.id as string
-  const orgId = req.params.orgId as string
-  const serviceId = Number(req.params.serviceId)
-  const { logMessage, logStatus, logTagName } = req.body
 
-  try {
+// const createManualLogs = async (req: Request, res: Response) => {
+//   const userId = req.id as string
+//   const orgId = req.params.orgId as string
+//   const serviceId = Number(req.params.serviceId)
+//   const { logMessage, logStatus, logTagName } = req.body
+
+//   try {
    
 
 
 
 
-    return res.status(200).json({ message: `Logs created ` })
-  } catch (err: unknown) {
-    console.log(err)
-  }
-}
+//     return res.status(200).json({ message: `Logs created ` })
+//   } catch (err: unknown) {
+//     console.log(err)
+//   }
+// }
 
 const getAllManualLogs = async (req: Request, res: Response, next:NextFunction) => {
 
-  const userId = req.id as string
+  const userId = (req as any).id
   const orgId = req.params.orgId as string
   const serviceId = Number(req.params.serviceId)
 
@@ -102,4 +100,4 @@ const getAllManualLogs = async (req: Request, res: Response, next:NextFunction) 
  
 // }
 
-export default { createManualLogs, getAllManualLogs, }
+export default {  getAllManualLogs, }

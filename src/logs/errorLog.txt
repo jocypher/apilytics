@@ -1,0 +1,11 @@
+20260330	10:42:32	function v4(options, buf, offset) {
+    if (native.randomUUID && !buf && !options) {
+        return native.randomUUID();
+    }
+    return _v4(options, buf, offset);
+}	TypeError	res.send is not a function20260330	10:43:06	function v4(options, buf, offset) {
+    if (native.randomUUID && !buf && !options) {
+        return native.randomUUID();
+    }
+    return _v4(options, buf, offset);
+}	TypeError	res.json is not a function
