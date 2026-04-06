@@ -16,6 +16,8 @@ const orgUserRepo = AppDataSource.getRepository(OrganizationUser)
 const serviceRepo = AppDataSource.getRepository(SubComponent)
 const serviceUserRepo = AppDataSource.getRepository(SubComponentUser)
 const apiKeyRepo = AppDataSource.getRepository(ApiKey)
+
+
 const createService = async (userId: string, orgId: string, name: string) => {
   const organizationMember = await orgUserRepo.findOne({
     where: {
@@ -196,9 +198,10 @@ const getAssignedUserForService = async(userId: string, orgId: string, serviceId
   if(!foundService){
     throw new UnauthorizedError()
   }
-  if(!sharedUtils.isOrgAdminOrOwner(orgMember)){
-    throw new ForbiddenError()
-  }
+  // if(!sharedUtils.isOrgAdminOrOwner(orgMember)){
+  //   throw new ForbiddenError()
+  // }
+
   const [assignments, total] = await serviceUserRepo.findAndCount({
     where:{
       sub_component:{id: serviceId}
@@ -207,11 +210,9 @@ const getAssignedUserForService = async(userId: string, orgId: string, serviceId
     skip,
     take: limit
   })
-  if(assignments.length ===0){
-    throw new UnauthorizedError('Unauthorized')
-  }
 
-  const users = assignments.map((a:SubComponentUser)=>a.user)
+  const users = assignments.map((a:SubComponentUser)=>a.user.username)
+  
  const result = {page,limit, total, users }
   return result
   

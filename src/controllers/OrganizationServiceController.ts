@@ -21,7 +21,7 @@ const assignUserToService = async (req: Request, res: Response, next: NextFuncti
   const userId = (req as any).id
   const orgId = sharedUtils.validatedParam(req.params.orgId)
   const serviceId = Number(req.params.serviceId)
-  const  roleToChangeId =sharedUtils.validatedParam(req.params.roleToChangeId)
+  const  roleToChangeId = sharedUtils.validatedParam(req.params.roleToChangeId)
 
   try {
   const result = await organizationServiceService.assignUserToService(userId, orgId, serviceId, roleToChangeId)

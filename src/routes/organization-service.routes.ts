@@ -25,24 +25,24 @@ routes.post(
 routes.delete(
   '/:orgId/:svcId',
   verifyJwtMiddlewares.verifyJwt,
-  validate(serviceIdSchema),
   validate(organizationIdSchema),
+  validate(serviceIdSchema),
   serviceController.deleteService
 )
 
 routes.get(
   '/:orgId/:svcId',
   verifyJwtMiddlewares.verifyJwt,
-  validate(serviceIdSchema),
   validate(organizationIdSchema),
+  validate(serviceIdSchema),
   serviceController.getServiceById
 )
 
 routes.get(
   '/users/:orgId/:svcId',
   verifyJwtMiddlewares.verifyJwt,
-  validate(serviceIdSchema),
   validate(organizationIdSchema),
+  validate(serviceIdSchema),
   serviceController.getAssignedUserForService
 )
 

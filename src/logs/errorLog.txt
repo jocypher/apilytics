@@ -8,4 +8,49 @@
         return native.randomUUID();
     }
     return _v4(options, buf, offset);
-}	TypeError	res.json is not a function
+}	TypeError	res.json is not a function20260330	11:25:44	52207f22-4647-41d9-bc9a-b48ae03e351f	QueryFailedError	relation "user" does not exist20260330	11:27:09	7febe6a8-33ed-4134-aa24-5a1c07583587	QueryFailedError	relation "user" does not exist20260330	11:32:28	d1a08592-9fda-495b-8d40-9d69655bbdb2	QueryFailedError	relation "user" does not exist20260330	11:32:54	58e52d0a-71d5-4024-914d-cf6f518fba24	QueryFailedError	relation "user" does not exist20260330	11:46:03	1fb28ccd-767d-49c7-bc15-fde115ec701d	Error	user already exist20260330	12:12:35	9ac02e71-81b2-4a29-acf9-136dc85b9fb6	Error	user already exist20260406	09:26:08	fbdf6613-345d-4322-b029-111e3a87e66a	TokenError	Bad Request
+20260406	09:26:09	8a59b6d8-23dd-47b0-8d7e-cdbcf561a8d0	TokenError	Bad Request
+20260406	09:46:33	977d7ff8-6593-405e-bb54-a844dc2c4b28	TypeError	Cannot destructure property 'token' of 'req.body' as it is undefined.
+20260406	09:47:50	73716a02-829e-48bb-bbce-e31a9c05f10f	JsonWebTokenError	invalid signature
+20260406	09:48:14	8a4e3ecb-af6b-4630-a98d-fa98e5373be7	JsonWebTokenError	invalid signature
+20260406	09:48:16	77617b5b-ffd5-46f7-a2fb-8dd410e81cb7	JsonWebTokenError	invalid signature
+20260406	09:48:33	e01c0a8c-61dc-4cc0-9d7e-96610135adc1	JsonWebTokenError	invalid signature
+20260406	09:48:35	9cea6ab7-5fda-426a-883e-0b8d19b1be52	JsonWebTokenError	invalid signature
+20260406	09:50:06	114c38e9-6266-432d-9d0b-fa164a9b8b41	TypeORMError	Empty criteria(s) are not allowed for the update method.
+20260406	09:50:42	2d8778d1-f6db-4028-81b2-f1c54f45edf0	TypeORMError	Empty criteria(s) are not allowed for the update method.
+20260406	09:50:52	824925e9-61f8-4826-947b-db73d7dd3816	TypeORMError	Empty criteria(s) are not allowed for the update method.
+20260406	09:50:59	725c0b3e-ffbb-4071-8eb7-968bfcbcb067	TypeORMError	Empty criteria(s) are not allowed for the update method.
+20260406	09:51:29	050df776-b3da-4750-a50f-ff11d6e89650	JsonWebTokenError	invalid signature
+20260406	09:51:37	59934cbb-f215-4c92-9b8c-af6f9b03d040	JsonWebTokenError	invalid signature
+20260406	09:51:39	ccdb5ec1-c4c6-4451-bb2a-277131ad3f08	JsonWebTokenError	invalid signature
+20260406	09:51:40	66cfff19-328f-49c8-ac89-34bfc5c54673	JsonWebTokenError	invalid signature
+20260406	09:53:38	08d57870-40a9-442d-9ba9-6d8a6e397050	TypeORMError	Empty criteria(s) are not allowed for the update method.
+20260406	09:53:56	379afdb0-c3c1-454b-91ca-018d1a5ff60d	TypeORMError	Empty criteria(s) are not allowed for the update method.
+20260406	10:03:56	145ff619-8ee0-4b2d-9811-b5b9c62e4a5d	TokenError	Bad Request
+20260406	10:16:21	968106af-bdc1-4375-9d98-812f5094ce17	TokenError	Bad Request
+20260406	10:21:59	859c1b76-9b69-4c73-b5ea-5b47ba51a3b3	TokenError	Bad Request
+20260406	10:23:04	ff30c161-42c0-4512-99b7-0b029dddcc78	TokenError	Bad Request
+20260406	10:24:40	2a71753c-b4b1-48a0-89f7-220d5a8edc86	TokenError	Bad Request
+20260406	10:28:26	2dd223d9-dd78-4494-b00e-891a4b108cd7	TokenError	Bad Request
+20260406	10:57:15	b54b89cb-e155-4381-9b84-0a5967283c3f	Error	Organization with name [object Object] already exist
+20260406	11:00:53	9db94724-2ff2-44e2-8f19-17a52d0b23b1	TokenError	Bad Request
+20260406	11:00:54	c5b9d660-6060-47ce-b51e-1efc765a33e9	TokenError	Bad Request
+20260406	12:07:04	5854f40b-5e45-4c4b-af03-6b0d8276881d	JsonWebTokenError	invalid signature
+20260406	12:07:36	83d757e4-dec2-4828-8ade-794da0c77972	JsonWebTokenError	invalid signature
+20260406	12:07:37	5f73e5c8-5bca-4b68-a518-45035354fa0c	JsonWebTokenError	invalid signature
+20260406	12:08:04	b854fce8-68da-4feb-8631-4109cbc0c561	TypeORMError	Empty criteria(s) are not allowed for the update method.
+20260406	12:08:55	e788b874-8e1c-4639-bbe1-ad92a5d040bc	TypeORMError	Empty criteria(s) are not allowed for the update method.
+20260406	12:08:57	541bdbe5-0281-45fc-be22-c181354638af	TypeORMError	Empty criteria(s) are not allowed for the update method.
+20260406	12:09:23	fcd33486-825d-4a4c-8f5b-d209e3786fa6	Error	Unauthorized
+20260406	12:10:32	b54defed-dfdb-4ad2-801c-c299fef40fd9	QueryFailedError	invalid input syntax for type uuid: "14ab7e1-ad58-40c4-8cb2-6c6409e44740"
+20260406	12:12:41	8110caec-0a77-4887-9276-a4e5054eb267	QueryFailedError	invalid input syntax for type uuid: "14ab7e1-ad58-40c4-8cb2-6c6409e44740"
+20260406	12:13:04	5a7d77d4-fb40-4541-819c-efd6448bf657	QueryFailedError	invalid input syntax for type uuid: "14ab7e1-ad58-40c4-8cb2-6c6409e44740"
+20260406	12:13:05	bbe2d816-a503-43f9-938c-d47035eed4a4	QueryFailedError	invalid input syntax for type uuid: "14ab7e1-ad58-40c4-8cb2-6c6409e44740"
+20260406	12:17:32	cbd4408d-be53-4004-b867-566dd691b487	Error	Unauthorized Error
+20260406	12:18:58	0e60c883-b736-4c8b-886e-3dbfc3b3d2bf	QueryFailedError	invalid input syntax for type uuid: "14ab7e1-ad58-40c4-8cb2-6c6409e44740"
+20260406	12:21:02	036a42fe-eb60-43b6-b4c3-31683254cd22	Error	Forbidden
+20260406	12:22:12	43194f32-0ec2-47d5-bbba-973113ed4918	Error	Forbidden
+20260406	12:33:40	79279dd7-ecb5-4f3c-b1b0-dd0ff2a2387b	Error	Forbidden
+20260406	12:34:33	cce1cc2b-f815-474f-af49-63497ab43afe	Error	Unauthorized
+20260406	12:34:40	b67e7bd9-72fa-40ce-8c65-8a17649f929b	Error	Unauthorized
+20260406	12:35:13	4c3caae7-e80b-4cad-a431-ebc11512b798	Error	Unauthorized

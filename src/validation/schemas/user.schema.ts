@@ -115,5 +115,5 @@ export const deleteProfileSchema = Joi.object({
 
 
 export const refreshTokenValidation = Joi.object({
-  token: Joi.string().label('refresh token').required(),
+  token: Joi.string().label('token').required(),
 })

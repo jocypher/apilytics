@@ -6,7 +6,7 @@ import {v4 as uuidv4} from "uuid"
 import fs from "fs"
 const logger = async(message:string,logName:string)=>{
      const date = format(new Date(),"yyyyMMdd\tHH:mm:ss")
-     const logger = `${date}\t${uuidv4}\t${message}`
+     const logger = `${date}\t${uuidv4()}\t${message}\n`
      try{
           if(!fs.existsSync(path.join(__dirname,"..","logs" ))){
                await fsPromises.mkdir(path.join(__dirname,"..","logs"))

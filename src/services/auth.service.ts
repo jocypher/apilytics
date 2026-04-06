@@ -17,15 +17,11 @@ const userRepo = AppDataSource.getRepository(User)
 
 const signup = async (username: string, email: string, password: string) => {
   console.log(normalizedEmail(email))
-  const userExist = await userRepo.findOne({
-    where: [{ email: normalizedEmail(email) }, { username: username }],
-    select: {
-      id: true,
-      username: true,
-      email: true,
-    },
+  const userCount = await userRepo.count({
+    where: [{ email: normalizedEmail(email) }],
   })
-  if (userExist) {
+  console.log(userCount)
+  if (userCount > 0) {
     throw new ConflictError('user already exist')
   }
   const saltRounds = Number(process.env.GEN_SALT) || 10
@@ -160,11 +156,8 @@ const resetPassword = async (email: string, newPassword: string) => {
 }
 
 const handleRefreshToken = async (token: string) => {
-  if (!token) {
-    throw new UnauthorizedError('The refresh token is not allowed')
-  }
 
-  const decoded = jwt.verify(token, process.env.REFRESH_TOKEN!) as {
+  const decoded = jwt.verify(token, process.env.ACCESS_TOKEN!) as {
     id: string
     email: string
   }
@@ -285,14 +278,15 @@ const getCurrentUser = async (userId: string) => {
       id: userId,
     },
   })
+
   if (!user) {
     throw new UnauthorizedError()
   }
   const userResult: Partial<User> = {
-    id: user.id,
-    email: normalizedEmail(user.email),
-    username: user.username,
-    created_at: user.created_at,
+    id: user?.id,
+    email: normalizedEmail(user!.email),
+    username: user!.username,
+    created_at: user!.created_at,
   }
 
   return userResult
@@ -336,7 +330,7 @@ const sum = (a: number, b: number) => {
 }
 
 const handleGoogleService = async (profile: any) => {
-  const email = profile.emails[0].value
+  const email = profile.emails?.[0]?.value
 
   let user = await userRepo.findOne({
     where: {

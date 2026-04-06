@@ -55,6 +55,7 @@ const createOrganization = async (organizationName: string, id: string) => {
   await orgUserRepo.save(organizationUser)
 
   const orgResult = {
+    organization_id: organization.id,
     organization_name: organizationName,
     created_by: user.username,
     org_role: organizationUser.role,
@@ -79,12 +80,18 @@ const getAllOrganization = async (id: string) => {
   }
   const foundOrganization = await orgRepo.find({
     where: {
-      created_by: {id: user.id},
+      created_by: { id: user.id },
     },
     relations: ['created_by'],
   })
-
-  return foundOrganization
+  const result = foundOrganization.map((org) => ({
+    id: org.id,
+    createdBy: org.created_by.username,
+    name: org.organization_name,
+    services: org.sub_components??[],
+    members: org.members??[],
+  }))
+  return result
 }
 
 const deleteOrganization = async (id: string, orgId: string) => {
@@ -323,18 +330,17 @@ const updateUserRole = async (
   await orgUserRepo.save(existingMembership)
 }
 
-const getUsersOrganizations = async(userId:string)=>{
-
+const getUsersOrganizations = async (userId: string) => {
   const usersOrganizations = await orgUserRepo.find({
-    where:{
-      user:{id: userId}
-    }, 
-    select:{
-      organization: true
-    }
+    where: {
+      user: { id: userId },
+    },
+    select: {
+      organization: true,
+    },
   })
 
-  for(const org in usersOrganizations){
+  for (const org in usersOrganizations) {
     console.log(org)
   }
   return usersOrganizations

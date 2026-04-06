@@ -38,8 +38,8 @@ AppDataSource.initialize()
   .then(() => {
     console.log('Database has been initialized')
     client.connect()
-    app.get("/", (req:any, res:any)=>{
-      res.send("<h2>Hllo world</h2>")
+    app.get("/api/v1/", (req:any, res:any)=>{
+      res.send("<h2>Hello world</h2>")
     })
     app.use('/api/v1/auth', auth)
     app.use('/api/v1/organization', org)

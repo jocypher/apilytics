@@ -5,20 +5,19 @@ import authService from '../services/auth.service'
 passport.use(
   new GoogleStrategy(
     {
+      passReqToCallback:true,
       clientID: process.env.CLIENT_ID || '',
       clientSecret: process.env.CLIENT_SECRET || '',
       callbackURL: process.env.GOOGLE_CALLBACK_URL,
     },
     async (
-      accessToken: string,
-      refreshToken: string,
       profile: any,
       done: any
     ) => {
       try {
         const user = await authService.handleGoogleService(profile)
         done(null, user)
-      } catch (e) {
+      } catch (e: any) {
         done(e, null)
       }
     }
