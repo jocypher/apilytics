@@ -13,8 +13,8 @@
     "strictPropertyInitialization": false,
     "skipLibCheck": true,
     "types": ["node"],
-    "isolatedModules": true
-
+    "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true
   },
   "no-floating-promises": true,
   "include": ["src/**/*","src/types/**/*.d.ts"]

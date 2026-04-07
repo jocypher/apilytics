@@ -5,28 +5,32 @@ import {
   Index,
   ManyToMany,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm'
-import { Log } from './log-item.entity'
+import { Log } from './Log.entity'
 
 @Entity()
-@Index(['organization_id', 'tag_name'], { unique: true })
+@Index(['organizationId', 'tagName'], { unique: true })
 export class LogTag {
-  @PrimaryGeneratedColumn()
-  id: number
+  @PrimaryGeneratedColumn("uuid")
+  logTagId: string
 
   @Column()
-  tag_name: string
+  tagName: string
 
   @Column({ type: 'text', nullable: true })
   description: string
 
-  @Index()
+  // confirm if we need this 
   @Column()
-  organization_id: string
+  organizationId: string
 
   @ManyToMany(() => Log, (log) => log.tags)
   logs: Log[]
 
   @CreateDateColumn()
-  created_at: Date
+  createdDate: Date
+
+  @UpdateDateColumn()
+  updatedDate: Date
 }

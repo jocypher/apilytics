@@ -1,8 +1,8 @@
 import crypto from 'crypto'
 import bcrypt from 'bcryptjs'
 import normalizeEmail from 'normalize-email'
-import AppDataSource from '../configs/app-datasource.config'
-import { User } from '../models/user-model.entity'
+import AppDataSource from '../configs/appDatasource.config'
+import { UserModel } from '../models/UserModel.entity'
 import jwt from 'jsonwebtoken'
 import redisService from './redis.service'
 import emailService from './email.service'
@@ -13,7 +13,7 @@ import {
   UnauthorizedError,
 } from '../validation/utils/errors/errors'
 
-const userRepo = AppDataSource.getRepository(User)
+const userRepo = AppDataSource.getRepository(UserModel)
 
 const signup = async (username: string, email: string, password: string) => {
   console.log(normalizedEmail(email))
@@ -29,7 +29,7 @@ const signup = async (username: string, email: string, password: string) => {
   const user = userRepo.create({
     username: username,
     email: normalizedEmail(email),
-    password_hash: hashPassword,
+    passwordHash: hashPassword,
   })
 
   await userRepo.save(user)
@@ -42,8 +42,8 @@ const login = async (email: string, password: string) => {
       email: normalizedEmail(email),
     },
     select: {
-      id: true,
-      password_hash: true,
+      userId: true,
+      passwordHash: true,
     },
   })
 
@@ -51,7 +51,7 @@ const login = async (email: string, password: string) => {
     throw new BadRequestError('Invalid credentials')
   }
 
-  const isValid = await bcrypt.compare(password, user.password_hash)
+  const isValid = await bcrypt.compare(password, user.passwordHash)
 
   if (!isValid) {
     throw new BadRequestError('Invalid credentials')
@@ -59,7 +59,7 @@ const login = async (email: string, password: string) => {
 
   const accessToken = jwt.sign(
     {
-      id: user.id,
+      id: user.userId,
       email: normalizedEmail(email),
     },
     process.env.ACCESS_TOKEN!,
@@ -68,7 +68,7 @@ const login = async (email: string, password: string) => {
 
   const refreshToken = jwt.sign(
     {
-      id: user.id,
+      id: user.userId,
       email: normalizedEmail(email),
     },
     process.env.REFRESH_TOKEN!,
@@ -76,11 +76,16 @@ const login = async (email: string, password: string) => {
   )
   const hashedRefreshToken = await bcrypt.hash(refreshToken, 10)
 
-  await userRepo.update(user.id, { refreshKey: hashedRefreshToken })
+  await Promise.all([
+    userRepo.update(user.userId, { refreshToken: hashedRefreshToken }),
+    redisService.setAccessToken(user.userId, accessToken),
+  ])
 
-  await redisService.setAccessToken(user.id, accessToken)
-
-  return { id: user.id, accessToken: accessToken, refreshToken: refreshToken }
+  return {
+    id: user.userId,
+    accessToken: accessToken,
+    refreshToken: refreshToken,
+  }
 }
 
 const forgotPassword = async (email: string) => {
@@ -89,7 +94,7 @@ const forgotPassword = async (email: string) => {
       email: normalizedEmail(email),
     },
     select: {
-      id: true,
+      userId: true,
       email: true,
       username: true,
     },
@@ -139,38 +144,37 @@ const resetPassword = async (email: string, newPassword: string) => {
       email: normalizedEmail(email),
     },
     select: {
-      id: true,
-      password_hash: true,
+      userId: true,
+      passwordHash: true,
     },
   })
-  if (!user?.id) {
+  if (!user?.userId) {
     throw new UnauthorizedError()
   }
   const saltRounds = Number(process.env.GEN_SALT) || 10
   const hashPassword = await bcrypt.hash(newPassword, saltRounds)
 
-  await userRepo.update(user.id, { password_hash: hashPassword })
+  await userRepo.update(user.userId, { passwordHash: hashPassword })
 
   await redisService.deleteResetPasswordToken(normalizedEmail(email))
-  await redisService.deleteAccessToken(user.id)
+  await redisService.deleteAccessToken(user.userId)
 }
 
 const handleRefreshToken = async (token: string) => {
-
   const decoded = jwt.verify(token, process.env.ACCESS_TOKEN!) as {
     id: string
     email: string
   }
   const user = await userRepo.findOne({
-    where: { id: decoded.id },
-    select: { refreshKey: true },
+    where: { userId: decoded.id },
+    select: { refreshToken: true },
   })
 
-  if (!user || !user.refreshKey) {
+  if (!user || !user.refreshToken) {
     throw new UnauthorizedError('Invalid refresh token')
   }
 
-  const isValid = await bcrypt.compare(token, user.refreshKey)
+  const isValid = await bcrypt.compare(token, user.refreshToken)
 
   if (!isValid) {
     throw new UnauthorizedError('Invalid refresh token')
@@ -189,7 +193,7 @@ const handleRefreshToken = async (token: string) => {
   )
 
   const hashedRefreshToken = await bcrypt.hash(newRefreshToken, 10)
-  await userRepo.update(user.id, { refreshKey: hashedRefreshToken })
+  await userRepo.update(user.userId, { refreshToken: hashedRefreshToken })
   return { accessToken, refreshToken: newRefreshToken }
 }
 
@@ -199,11 +203,11 @@ const updateUsername = async (username: string, userId: string) => {
       username: username,
     },
     select: {
-      id: true,
+      userId: true,
     },
   })
 
-  if (user && user.id !== userId) {
+  if (user && user.userId !== userId) {
     throw new ConflictError('username already exist')
   }
 
@@ -218,17 +222,17 @@ const updateUserPassword = async (
 ) => {
   const user = await userRepo.findOne({
     where: {
-      id: userId,
+      userId: userId,
     },
     select: {
-      password_hash: true,
+      passwordHash: true,
     },
   })
   if (!user) {
     throw new UnauthorizedError()
   }
 
-  const isValidPassword = await bcrypt.compare(oldPassword, user.password_hash)
+  const isValidPassword = await bcrypt.compare(oldPassword, user.passwordHash)
 
   if (!isValidPassword) {
     throw new BadRequestError('Invalid Password')
@@ -244,16 +248,16 @@ const updateUserPassword = async (
 
   const saltRounds = Number(process.env.GEN_SALT) || 10
   const hashNewPassword = await bcrypt.hash(newPassword, saltRounds)
-  await userRepo.update(userId, { password_hash: hashNewPassword })
+  await userRepo.update(userId, { passwordHash: hashNewPassword })
 }
 
 const handleLogout = async (userId: string) => {
   const user = await userRepo.findOne({
     where: {
-      id: userId,
+      userId: userId,
     },
     select: {
-      id: true,
+      userId: true,
     },
   })
 
@@ -268,32 +272,32 @@ const handleLogout = async (userId: string) => {
 
   await Promise.all([
     redisService.deleteAccessToken(userId),
-    userRepo.update(user.id, { refreshKey: '' }),
+    userRepo.update(user.userId, { refreshToken: '' }),
   ])
 }
 
 const getCurrentUser = async (userId: string) => {
   const user = await userRepo.findOne({
     where: {
-      id: userId,
+      userId: userId,
     },
   })
 
   if (!user) {
     throw new UnauthorizedError()
   }
-  const userResult: Partial<User> = {
-    id: user?.id,
+  const userResult: Partial<UserModel> = {
+    userId: user?.userId,
     email: normalizedEmail(user!.email),
     username: user!.username,
-    created_at: user!.created_at,
+    createdDate: user!.createdDate,
   }
 
   return userResult
 }
 
 const deleteAccount = async (userId: string) => {
-  const user = await userRepo.findOne({ where: { id: userId } })
+  const user = await userRepo.findOne({ where: { userId: userId } })
   if (!user) {
     throw new UnauthorizedError()
   }
@@ -305,7 +309,7 @@ const deleteAccount = async (userId: string) => {
   await Promise.all([
     redisService.deleteAccessToken(userId),
     userRepo.delete({
-      id: userId,
+      userId: userId,
     }),
   ])
 }
@@ -341,7 +345,7 @@ const handleGoogleService = async (profile: any) => {
     user = userRepo.create({
       username: profile.displayName,
       email: email,
-      password_hash: '',
+      passwordHash: '',
     })
     await userRepo.save(user)
   }

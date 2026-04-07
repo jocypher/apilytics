@@ -8,20 +8,20 @@ import { acceptOrganizationTokenSchema, createOrgSchema, deleteOrganizationSchem
 const routes = express.Router()
 
 routes.post(
-  '/create-org',
+  '/',
   verifyJwtMiddlewares.verifyJwt,
   validate(createOrgSchema),
   organizationController.createOrganization
 )
 
 routes.post(
-  '/accept-invite',
+  '/acceptInvite',
   validate(acceptOrganizationTokenSchema),
   organizationController.acceptOrganizationInvite
 )
 
 routes.put(
-  '/update-role/:orgId/:targetUserId',
+  '/updateRole/:orgId/:targetUserId',
   verifyJwtMiddlewares.verifyJwt,
   validate(updateOrgSchema),
   organizationController.updateUserRole

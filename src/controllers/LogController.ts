@@ -1,16 +1,12 @@
-
-import AppDataSource from '../configs/app-datasource.config'
-import { SubComponent } from '../models/organization-service.entity'
-import { Log } from '../models/log-item.entity'
-import { OrganizationUser } from '../models/organization-user.entity'
+import AppDataSource from '../configs/appDatasource.config'
+import { App } from '../models/App.entity'
+import { Log } from '../models/Log.entity'
+import { Membership } from '../models/Membership.entity'
 import { NextFunction, Request, Response } from 'express'
 
-
-const orgUserRepo = AppDataSource.getRepository(OrganizationUser)
-const orgServiceRepo = AppDataSource.getRepository(SubComponent)
+const membershipRepo = AppDataSource.getRepository(Membership)
+const appRepo = AppDataSource.getRepository(App)
 const logRepo = AppDataSource.getRepository(Log)
-
-
 
 // const createManualLogs = async (req: Request, res: Response) => {
 //   const userId = req.id as string
@@ -19,10 +15,6 @@ const logRepo = AppDataSource.getRepository(Log)
 //   const { logMessage, logStatus, logTagName } = req.body
 
 //   try {
-   
-
-
-
 
 //     return res.status(200).json({ message: `Logs created ` })
 //   } catch (err: unknown) {
@@ -30,30 +22,33 @@ const logRepo = AppDataSource.getRepository(Log)
 //   }
 // }
 
-const getAllManualLogs = async (req: Request, res: Response, next:NextFunction) => {
-
+const getAllManualLogs = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const userId = (req as any).id
   const orgId = req.params.orgId as string
-  const serviceId = Number(req.params.serviceId)
+  const appId = req.params.appId as string
 
   try {
-    const orgUser = await orgUserRepo.findOne({
+    const member = await membershipRepo.findOne({
       where: {
-        user: { id: userId },
-        organization: { id: orgId },
+        user: { userId: userId },
+        organization: { organizationId: orgId },
       },
       relations: ['user', 'organization'],
     })
 
-    if (!orgUser)
+    if (!member)
       return res
         .status(404)
         .json({ message: `Not a member of the organization` })
 
-    const assignedUser = await orgServiceRepo.findOne({
+    const assignedUser = await appRepo.findOne({
       where: {
-        id: serviceId,
-        users: { user: orgUser.user },
+        appId: appId,
+        users: {appUserId:member.user.userId}
       },
       relations: ['user'],
     })
@@ -64,7 +59,7 @@ const getAllManualLogs = async (req: Request, res: Response, next:NextFunction) 
 
     const logs = await logRepo.find({
       where: {
-        sub_component: { id: serviceId },
+        apps: { appId: appId },
       },
     })
 
@@ -97,7 +92,6 @@ const getAllManualLogs = async (req: Request, res: Response, next:NextFunction) 
 //     next(err)
 //   }
 
- 
 // }
 
-export default {  getAllManualLogs, }
+export default { getAllManualLogs }

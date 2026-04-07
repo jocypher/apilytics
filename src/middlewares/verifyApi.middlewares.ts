@@ -1,24 +1,30 @@
-import appDataSource from '../configs/app-datasource.config'
-import { ApiKey } from '../models/api-key.entity'
+import appDataSource from '../configs/appDatasource.config'
+import { ApiKey } from '../models/ApiKey.entity'
 import crypto from 'crypto'
 import { Request, Response, NextFunction } from 'express'
-import { Organization } from '../models/organization-model.entity'
-import { SubComponent } from '../models/organization-service.entity'
+import { Organization } from '../models/Organization.entity'
+import { App } from '../models/App.entity'
 
 const apiKeyRepo = appDataSource.getRepository(ApiKey)
 
 export interface ApiRequest extends Request {
   apiKey: ApiKey
-  subComponent: SubComponent
+  apps: App
   organization: Organization
-  subcomponentName: string
+  appName: string
   organizationName: string
 }
 
-export const verifyApiKey = async (req: ApiRequest, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization 
+export const verifyApiKey = async (
+  req: ApiRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  const authHeader = req.headers.authorization
 
-  if (!authHeader) return res.status(401).json({ message: 'Missing Api Keys' })
+  if (!authHeader) {
+    return res.status(401).json({ message: 'Missing Api Keys' })
+  }
 
   try {
     const rawKey = authHeader.replace('Bearer ', '').trim()
@@ -26,22 +32,25 @@ export const verifyApiKey = async (req: ApiRequest, res: Response, next: NextFun
 
     const apiKey = await apiKeyRepo.findOne({
       where: {
-        key_hash: hashedKey,
-        is_active: true,
+        keyHash: hashedKey,
+        isActive: true,
       },
-      relations: ['subcomponent', 'subcomponent.organization'],
+      relations: ['apps', 'apps.organization'],
     })
 
-    if (!apiKey) return res.status(401).json({ messag: 'No api key found' })
+    if (!apiKey) {
+      return res.status(401).json({ messag: 'No api key found' })
+    }
 
-    if (apiKey.expires_at && apiKey.expires_at < new Date())
+    if (apiKey.expiresDate && apiKey.expiresDate < new Date()) {
       return res.status(401).json({ message: 'Invalid Api Key' })
+    }
 
     req.apiKey = apiKey
-    req.subcomponentName = apiKey.subcomponent.name
-    req.organizationName = apiKey.subcomponent.organization.organization_name
-    req.subComponent = apiKey.subcomponent
-    req.organization = apiKey.subcomponent.organization
+    req.appName = apiKey.apps.name
+    req.organizationName = apiKey.apps.organization.organizationName
+    req.apps = apiKey.apps
+    req.organization = apiKey.apps.organization
 
     next()
   } catch (err) {

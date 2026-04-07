@@ -1,7 +1,7 @@
 // all redis services will go here
 
 import client from '../configs/redis.configs'
-import { redisKey } from '../validation/constants/redis_keys'
+import { redisKey } from '../validation/constants/redisKeys'
 
 const setAccessToken = async (id: string, token: string) => {
   await client.set(redisKey.auth(id), token, {

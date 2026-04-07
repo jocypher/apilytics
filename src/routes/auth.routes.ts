@@ -15,7 +15,7 @@ import {
   refreshTokenValidation,
 } from '../validation/schemas/user.schema'
 import rateLimiter from '../middlewares/ratelimiter.middleware'
-import { rateLimitKeys } from '../validation/constants/rate_limit_keys'
+import { rateLimitKeys } from '../validation/constants/rateLimitKeys'
 import passport from '../configs/passport'
 
 routes.post('/register', validate(registerSchema), authController.handleSignup)
@@ -82,7 +82,7 @@ routes.post('/logout', authController.handleLogout)
 routes.get('/me', verifyJwtMiddlewares.verifyJwt, authController.getCurrentUser)
 
 routes.delete(
-  '/delete-account',
+  '/deleteAccount',
   verifyJwtMiddlewares.verifyJwt,
   validate(deleteProfileSchema),
   authController.deleteAccount

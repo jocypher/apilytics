@@ -1,5 +1,5 @@
 import express from 'express'
-import serviceController from '../controllers/OrganizationServiceController'
+import appController from '../controllers/AppController'
 import verifyJwtMiddlewares from '../middlewares/verifyJwt.middlewares'
 import validate from '../middlewares/validation.middleware'
 import { createServiceSchema, serviceIdSchema } from '../validation/schemas/service.schema'
@@ -11,7 +11,7 @@ routes.post(
   verifyJwtMiddlewares.verifyJwt,
   validate(createServiceSchema),
   validate(organizationIdSchema),
-  serviceController.createService
+  appController.createApp
 )
 
 routes.post(
@@ -19,7 +19,7 @@ routes.post(
   verifyJwtMiddlewares.verifyJwt,
   validate(serviceIdSchema),
   validate(organizationIdSchema),
-  serviceController.assignUserToService
+  appController.assignUserToApp
 )
 
 routes.delete(
@@ -27,7 +27,7 @@ routes.delete(
   verifyJwtMiddlewares.verifyJwt,
   validate(organizationIdSchema),
   validate(serviceIdSchema),
-  serviceController.deleteService
+  appController.deleteApp
 )
 
 routes.get(
@@ -35,7 +35,7 @@ routes.get(
   verifyJwtMiddlewares.verifyJwt,
   validate(organizationIdSchema),
   validate(serviceIdSchema),
-  serviceController.getServiceById
+  appController.getAppById
 )
 
 routes.get(
@@ -43,7 +43,7 @@ routes.get(
   verifyJwtMiddlewares.verifyJwt,
   validate(organizationIdSchema),
   validate(serviceIdSchema),
-  serviceController.getAssignedUserForService
+  appController.getAssignedUsersForApp
 )
 
 //  TODO: REMOVE ASSIGNED USERS FOR SERVICE
