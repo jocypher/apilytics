@@ -187,3 +187,10 @@
 20260406	12:34:40	d1e8b45f-1a26-42c6-beca-55577bb3c6a0	GET	undefined	/api/v1/service/users/614ab7e1-ad58-40c4-8cb2-6c6409e44740/1
 20260406	12:35:13	64ea5ca5-f452-44e0-8654-54e7fd5bc4b1	GET	undefined	/api/v1/service/users/614ab7e1-ad58-40c4-8cb2-6c6409e44740/1
 20260406	12:36:03	405b78c3-8eb9-4091-a28c-f8e8abc9b342	GET	undefined	/api/v1/service/users/614ab7e1-ad58-40c4-8cb2-6c6409e44740/1
+20260406	15:14:17	df1409db-d5d9-473d-97f5-b737944195ac	POST	undefined	/api/v1/auth/register
+20260406	15:14:45	45c54475-3754-413d-83d7-79a74daa0391	POST	undefined	/api/v1/auth/signin
+20260406	15:15:12	1b397ae0-1247-42f0-91ac-07fde14c2924	POST	undefined	/api/v1/auth/refresh
+20260406	15:16:46	28b23605-5ba2-4155-98ef-3c38f68c1b81	POST	undefined	/api/v1/auth/refresh
+20260406	15:17:09	9256d2ee-81f8-4374-83b4-445bc2234044	POST	undefined	/api/v1/organization/create-org
+20260406	15:19:12	61e3cd98-87d1-4ff2-96d8-1457fd91edd2	POST	undefined	/api/v1/auth/forgot-password
+20260406	15:20:41	9423ef96-787f-4d67-bb74-ac0691207e5f	POST	undefined	/api/v1/auth/verify-otp
