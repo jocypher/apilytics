@@ -1,4 +1,4 @@
-import Joi from "../utils/extended-joi"
+import Joi from "../utils/extendedJoi"
 
 console.log(`The result is ${typeof Joi.string().passwordComplexity}`)
 

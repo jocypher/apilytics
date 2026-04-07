@@ -1,5 +1,6 @@
 import crypto from 'crypto'
-import { OrganizationUser } from '../../models/organization-user.entity'
+import { Membership } from '../../models/Membership.entity'
+import { MembershipRole } from '../../enums/membershipRole.enum'
 
 const generateApiKey = (options: {
   organizationName: string
@@ -10,9 +11,9 @@ const generateApiKey = (options: {
   return apiKey
 }
 
-const isOrgAdminOrOwner = (membership: OrganizationUser | string): boolean => {
+const isOrgAdminOrOwner = (membership: Membership | string): boolean => {
   if (typeof membership === 'string') return false
-  return membership && ['owner', 'admin'].includes(membership.role)
+  return membership && [MembershipRole.OWNER, MembershipRole.ADMIN].includes(membership.role)
 }
 
 const hashApiKey = async (key: string) => {

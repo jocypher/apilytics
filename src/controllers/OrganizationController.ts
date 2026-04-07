@@ -8,10 +8,10 @@ const createOrganization = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { org_name } = req.body
+  const { orgName } = req.body
   const id = (req as any).id
   try {
-    const orgResult = await organizationService.createOrganization(org_name, id)
+    const orgResult = await organizationService.createOrganization(orgName, id)
     return res
       .status(201)
       .json({ message: 'organization created', org: orgResult })
@@ -71,7 +71,7 @@ const updateOrganization = async (
     )
     return res
       .status(200)
-      .json({ message: 'update successful', org_name: org.organization_name })
+      .json({ message: 'update successful', org_name: org.organizationName })
   } catch (err) {
     console.log(err)
     next(err)
@@ -184,7 +184,7 @@ const getUsersOrganizations = async (
   next: NextFunction
 ) => {
   try {
-    const orgs = await organizationService.getUsersOrganizations(
+    const orgs = await organizationService.getOrganizationsForUser(
       (req as any).id
     )
     return res.status(200).json({ orgs })

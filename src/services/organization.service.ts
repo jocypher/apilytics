@@ -1,8 +1,8 @@
 import bcrypt from 'bcryptjs'
-import AppDataSource from '../configs/app-datasource.config'
-import { User } from '../models/user-model.entity'
-import { Organization } from '../models/organization-model.entity'
-import { OrganizationUser } from '../models/organization-user.entity'
+import AppDataSource from '../configs/appDatasource.config'
+import { UserModel } from '../models/UserModel.entity'
+import { Organization } from '../models/Organization.entity'
+import { Membership } from '../models/Membership.entity'
 import {
   ConflictError,
   ForbiddenError,
@@ -13,25 +13,27 @@ import sharedUtils from '../validation/utils/shared.utils'
 import redisService from './redis.service'
 import emailService from './email.service'
 import client from '../configs/redis.configs'
-const userRepo = AppDataSource.getRepository(User)
+import { MembershipRole } from '../enums/membershipRole.enum'
+import { InviteStatus } from '../enums/inviteStatus.enum'
+const userRepo = AppDataSource.getRepository(UserModel)
 const orgRepo = AppDataSource.getRepository(Organization)
-const orgUserRepo = AppDataSource.getRepository(OrganizationUser)
+const membershipRepo = AppDataSource.getRepository(Membership)
 
 const createOrganization = async (organizationName: string, id: string) => {
   const user = await userRepo.findOne({
     where: {
-      id: id,
+      userId: id,
     },
   })
-  if (user?.id == null) {
+  if (user?.userId == null) {
     return new UnauthorizedError()
   }
   const orgName = await orgRepo.findOne({
     where: {
-      organization_name: organizationName,
+      organizationName: organizationName,
     },
     select: {
-      organization_name: true,
+      organizationName: true,
     },
   })
   if (orgName) {
@@ -39,29 +41,28 @@ const createOrganization = async (organizationName: string, id: string) => {
   }
 
   const organization = orgRepo.create({
-    organization_name: organizationName,
-    created_by: user,
+    organizationName: organizationName,
+    createdBy: user,
   })
 
-  await orgRepo.save(organization)
-
-  const organizationUser = orgUserRepo.create({
-    display_name: user.username,
+  const member = membershipRepo.create({
+    username: user.username,
     user: user,
     organization: organization,
-    role: 'owner',
-    invite_status: 'accepted',
+    role: MembershipRole.OWNER,
+    inviteStatus: InviteStatus.ACCEPT,
   })
-  await orgUserRepo.save(organizationUser)
+
+  await Promise.all([orgRepo.save(organization), membershipRepo.save(member)])
 
   const orgResult = {
-    organization_id: organization.id,
-    organization_name: organizationName,
-    created_by: user.username,
-    org_role: organizationUser.role,
-    created_at: organization.created_at,
-    invited_by: null,
-    invite_status: organizationUser.invite_status,
+    organizationId: organization.organizationId,
+    organizationName: organizationName,
+    createdBy: user.username,
+    organizationRole: member.role,
+    createdDate: organization.createdDate,
+    invitedBy: null,
+    inviteStatus: member.inviteStatus,
   }
   return orgResult
 }
@@ -69,51 +70,52 @@ const createOrganization = async (organizationName: string, id: string) => {
 const getAllOrganization = async (id: string) => {
   const user = await userRepo.findOne({
     where: {
-      id: id,
+      userId: id,
     },
     select: {
-      id: true,
+      userId: true,
     },
   })
-  if (user?.id == null) {
+  if (user?.userId == null) {
     throw new UnauthorizedError()
   }
   const foundOrganization = await orgRepo.find({
     where: {
-      created_by: { id: user.id },
-    },
-    relations: ['created_by'],
+      createdBy: { userId: user.userId },
+    }
   })
   const result = foundOrganization.map((org) => ({
-    id: org.id,
-    createdBy: org.created_by.username,
-    name: org.organization_name,
-    services: org.sub_components??[],
-    members: org.members??[],
+    id: org.organizationId,
+    createdBy: org.createdBy.username,
+    name: org.organizationName,
+    apps: org.apps ?? [],
+    members: org.members ?? [],
   }))
   return result
 }
 
 const deleteOrganization = async (id: string, orgId: string) => {
-  const orgUser = await orgUserRepo.findOne({
+  const member = await membershipRepo.findOne({
     where: {
-      user: { id: id },
-      organization: { id: orgId },
-      role: 'owner',
+      user: { userId: id },
+      organization: { organizationId: orgId },
+    },
+    select:{
+      role: true
     },
     relations: ['user', 'organization'],
   })
-  console.log(orgUser)
-  if (!orgUser || !['admin', 'owner'].includes(orgUser.role)) {
-    throw new ForbiddenError()
+  console.log(member)
+  if (!member || !['admin', 'owner'].includes(member.role)) {
+    throw new UnauthorizedError()
   }
 
   await Promise.all([
-    orgUserRepo.delete({
-      organization: { id: orgId },
+    membershipRepo.delete({
+      organization: { organizationId: orgId },
     }),
 
-    orgRepo.delete({ id: orgId }),
+    orgRepo.delete({ organizationId: orgId }),
   ])
 }
 
@@ -124,26 +126,29 @@ const updateOrganizationName = async (
 ) => {
   const org = await orgRepo.findOne({
     where: {
-      id: orgId,
-      created_by: { id: id },
+      organizationId: orgId,
+      createdBy: { userId: id },
     },
-    relations: ['created_by'],
+    select:{
+      organizationName: true,
+      organizationId: true
+    }
   })
   if (!org) {
     throw new UnauthorizedError()
   }
 
-  const orgUser = await orgUserRepo.findOne({
+  const member = await membershipRepo.findOne({
     where: {
-      organization: { organization_name: org.organization_name },
+      organization: { organizationName: org.organizationName },
     },
     relations: ['user', 'organization'],
   })
 
-  if (!sharedUtils.isOrgAdminOrOwner(orgUser!)) throw new UnauthorizedError()
+  if (!sharedUtils.isOrgAdminOrOwner(member!)) throw new UnauthorizedError()
 
   if (orgName) {
-    org.organization_name = orgName
+    org.organizationName = orgName
   }
 
   await orgRepo.save(org)
@@ -151,27 +156,27 @@ const updateOrganizationName = async (
 }
 
 const getOrganizationById = async (orgId: string, id: string) => {
-  const membership = await orgUserRepo.findOne({
+  const member = await membershipRepo.findOne({
     where: {
-      organization: { id: orgId },
-      user: { id: id },
+      organization: { organizationId: orgId },
+      user: { userId: id },
     },
     relations: ['organization', 'user'],
   })
 
-  if (!membership) {
+  if (!member) {
     throw new UnauthorizedError()
   }
 
   const organization = await orgRepo.findOne({
     where: {
-      id: orgId,
+      organizationId: orgId,
     },
     select: {
-      id: true,
+      organizationId: true,
     },
   })
-  if (organization?.id == null) {
+  if (organization?.organizationId == null) {
     throw new UnauthorizedError()
   }
 
@@ -184,17 +189,17 @@ const sendOrganizationInvite = async (
 ) => {
   const organization = await orgRepo.findOne({
     where: {
-      id: orgId,
+      organizationId: orgId,
     },
   })
   if (!organization) {
     throw new UnauthorizedError()
   }
 
-  const requester = await orgUserRepo.findOne({
+  const requester = await membershipRepo.findOne({
     where: {
-      user: { id: id },
-      organization: { id: organization.id },
+      user: { userId: id },
+      organization: { organizationId: organization.organizationId },
     },
     relations: ['user', 'organization'],
   })
@@ -206,14 +211,14 @@ const sendOrganizationInvite = async (
   const rawToken = generateInviteToken()
   console.log(rawToken)
   const hashedToken = await hashInviteToken(rawToken)
-  const inviteLink = `${process.env.FRONTEND_URL}/accept-invite?token=${rawToken}&orgId=${organization.id}`
+  const inviteLink = `${process.env.FRONTEND_URL}/acceptInvite?token=${rawToken}&orgId=${organization.organizationId}`
 
   await redisService.setInviteToken(hashedToken, email, orgId, id)
 
   await emailService.sendInvite(
     email,
-    inviteLink.toString(),
-    organization.organization_name
+    inviteLink,
+    organization.organizationName
   )
 }
 
@@ -244,17 +249,18 @@ const acceptOrganizationInvite = async (token: string, orgId: string) => {
 
   const organization = await orgRepo.findOne({
     where: {
-      id: orgId,
+      
+      organizationId: orgId,
     },
   })
   if (!organization) {
     throw new NotFoundError('Organization does not exist')
   }
 
-  const existingMembership = await orgUserRepo.findOne({
+  const existingMembership = await membershipRepo.findOne({
     where: {
-      user: { id: user.id },
-      organization: { id: orgId },
+      user: { userId: user.userId },
+      organization: { organizationId: orgId },
     },
     relations: ['user', 'organization'],
   })
@@ -262,24 +268,24 @@ const acceptOrganizationInvite = async (token: string, orgId: string) => {
     throw new ForbiddenError('User already a member of the organization')
   }
 
-  const orgUser = orgUserRepo.create({
-    display_name: user.username,
-    user: user,
-    organization: organization,
-    role: 'member',
-    invite_status: 'accepted',
-    invited_by_user_id: inviteData.invitedBy,
-  })
+ const member = membershipRepo.create({
+   username: user.username,
+   user: user,
+   organization: organization,
+   role: MembershipRole.MEMBER,
+   inviteStatus: InviteStatus.ACCEPT,
+   invitedBy:inviteData.invitedBy
+ })
 
-  await orgUserRepo.save(orgUser)
+  await membershipRepo.save(member)
   await client.del(`org_invite:${token}`)
 }
 
 const getMembersInOrganization = async (id: string, orgId: string) => {
-  const requester = await orgUserRepo.findOne({
+  const requester = await membershipRepo.findOne({
     where: {
-      user: { id: id },
-      organization: { id: orgId },
+      user: { userId: id },
+      organization: { organizationId: orgId },
     },
     relations: ['user', 'organization'],
   })
@@ -288,19 +294,19 @@ const getMembersInOrganization = async (id: string, orgId: string) => {
     throw new UnauthorizedError()
   }
 
-  const members = await orgUserRepo.find({
+  const members = await membershipRepo.find({
     where: {
-      organization: { id: orgId },
+      organization: { organizationId: orgId },
     },
     relations: ['user'],
   })
   const result = members.map((member) => {
     return {
-      name: member.display_name,
+      name: member.username,
       role: member.role,
       email: member.user.email,
-      invite_status: member.invite_status,
-      joined_at: member.joined_at,
+      inviteStatus: member.inviteStatus,
+      joinedDate: member.joinedDate,
     }
   })
   return result
@@ -314,10 +320,10 @@ const updateUserRole = async (
   if (!sharedUtils.isOrgAdminOrOwner(reqUserId)) {
     throw new ForbiddenError('Forbidden')
   }
-  const existingMembership = await orgUserRepo.findOne({
+  const existingMembership = await membershipRepo.findOne({
     where: {
-      user: { id: targetUserId },
-      organization: { id: orgId },
+      user: { userId: targetUserId },
+      organization: { organizationId: orgId },
     },
     relations: ['organization', 'user'],
   })
@@ -325,25 +331,31 @@ const updateUserRole = async (
     throw new ForbiddenError('user is not a member of this organization')
   }
 
-  existingMembership.role = 'admin'
+  if (
+    existingMembership.role === MembershipRole.ADMIN ||
+    existingMembership.role === MembershipRole.OWNER
+  ){
+    throw new UnauthorizedError("user already has authorization")
+  }
+    existingMembership.role = MembershipRole.ADMIN
 
-  await orgUserRepo.save(existingMembership)
+  await membershipRepo.save(existingMembership)
 }
 
-const getUsersOrganizations = async (userId: string) => {
-  const usersOrganizations = await orgUserRepo.find({
+const getOrganizationsForUser = async (userId: string) => {
+  const organizationsForUsers = await membershipRepo.find({
     where: {
-      user: { id: userId },
+      user: { userId: userId },
     },
     select: {
       organization: true,
     },
   })
 
-  for (const org in usersOrganizations) {
-    console.log(org)
+  for (const orgs in organizationsForUsers) {
+    console.log(orgs)
   }
-  return usersOrganizations
+  return organizationsForUsers
 }
 const generateInviteToken = (): string => {
   const token = crypto.randomUUID()
@@ -364,7 +376,7 @@ export default {
   sendOrganizationInvite,
   getMembersInOrganization,
   acceptOrganizationInvite,
-  getUsersOrganizations,
+  getOrganizationsForUser,
   updateUserRole,
   generateInviteToken,
   hashInviteToken,

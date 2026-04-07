@@ -14,9 +14,9 @@ const handleSignup = async (
     return res.status(201).json({
       message: 'user account created',
       email: email,
-      id: user.id,
+      id: user.userId,
       username: username,
-      createdAt: user.created_at,
+      createdAt: user.createdDate,
     })
   } catch (err: unknown) {
     next(err)
@@ -29,10 +29,10 @@ const handleSignin = async (
   next: NextFunction
 ) => {
   const { email, password } = req.body
-  const normalizedEmail = normalizeEmail(email)
+  
   try {
     const { id, accessToken, refreshToken } = await authService.login(
-      normalizedEmail,
+      email,
       password
     )
     return res.status(200).json({

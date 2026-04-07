@@ -14,9 +14,9 @@
     "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
     "start": "node dist/server.js",
     "typeorm": "typeorm-ts-node-commonjs",
-    "migration:generate": "npm run typeorm -- migration:generate -d src/configs/app-datasource.config",
-    "migration:run": "npm run typeorm -- migration:run -d src/configs/app-datasource.config",
-    "migration:revert": "npm run typeorm -- migration:revert -d src/configs/app-datasource.config",
+    "migration:generate": "npm run typeorm -- migration:generate -d src/configs/appDatasource.config",
+    "migration:run": "npm run typeorm -- migration:run -d src/configs/appDatasource.config",
+    "migration:revert": "npm run typeorm -- migration:revert -d src/configs/appDatasource.config",
     "lint": "eslint .",
     "prepare": "husky"
   },
