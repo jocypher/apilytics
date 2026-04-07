@@ -54,3 +54,4 @@
 20260406	12:34:33	cce1cc2b-f815-474f-af49-63497ab43afe	Error	Unauthorized
 20260406	12:34:40	b67e7bd9-72fa-40ce-8c65-8a17649f929b	Error	Unauthorized
 20260406	12:35:13	4c3caae7-e80b-4cad-a431-ebc11512b798	Error	Unauthorized
+20260406	15:15:12	9838ace2-9eb0-44bc-bea8-878d9625a414	TypeORMError	Empty criteria(s) are not allowed for the update method.

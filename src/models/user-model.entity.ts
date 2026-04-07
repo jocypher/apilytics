@@ -30,7 +30,7 @@ export class User {
   refreshKey: string
 
   @OneToMany(() => Organization, (org) => org.created_by)
-  organizations: Organization[]
+  organizations: Organization[] //MOST ORG USE COMPANY MAIL
 
   @OneToMany(() => OrganizationUser, (orgUser) => orgUser.user)
   organization_members: OrganizationUser[]
