@@ -23,11 +23,11 @@ export class App {
   @Column()
   name: string
 
-  @ManyToOne(() => Organization, (organization) => organization.organizationId)
+  @ManyToOne(() => Organization, (organization) => organization.organizationId, {onDelete:'CASCADE', onUpdate:'CASCADE'})
   @JoinColumn({ name: 'organizationId' })
   organization: Organization
 
-  @ManyToOne(() => UserModel, (user) => user.userId)
+  @ManyToOne(() => UserModel, (user) => user.userId, {onDelete:'SET NULL', onUpdate:'CASCADE'})
   @JoinColumn({ name: 'createdById' })
   createdBy: UserModel
 

@@ -1,10 +1,12 @@
 import AppDataSource from '../configs/appDatasource.config'
 import { App } from '../models/App.entity'
 import { Log } from '../models/Log.entity'
-import { Membership } from '../models/Membership.entity'
-import { NextFunction, Request, Response } from 'express'
 
-const membershipRepo = AppDataSource.getRepository(Membership)
+import { NextFunction, Request, Response } from 'express'
+import logServices from '../services/log.services'
+import sharedUtils from '../validation/utils/shared.utils'
+
+
 const appRepo = AppDataSource.getRepository(App)
 const logRepo = AppDataSource.getRepository(Log)
 
@@ -22,44 +24,48 @@ const logRepo = AppDataSource.getRepository(Log)
 //   }
 // }
 
+const createManualLogs = async(req:Request, res:Response, next:NextFunction)=>{
+  const userId = (req as any).id
+  const appId = sharedUtils.validatedParam(req.params.appId)
+  const {message, loglevel, tags} = req.body
+  try{
+      const result = await logServices.createManualLogs(userId, appId, message,  loglevel,tags )
+      return res.status(200).json({result})
+  }catch(err){
+    next(err)
+  }
+}
+
 const getAllManualLogs = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   const userId = (req as any).id
-  const orgId = req.params.orgId as string
+
   const appId = req.params.appId as string
 
   try {
-    const member = await membershipRepo.findOne({
-      where: {
-        user: { userId: userId },
-        organization: { organizationId: orgId },
-      },
-      relations: ['user', 'organization'],
-    })
 
-    if (!member)
-      return res
-        .status(404)
-        .json({ message: `Not a member of the organization` })
 
     const assignedUser = await appRepo.findOne({
       where: {
         appId: appId,
-        users: {appUserId:member.user.userId}
+        users: {appUserId:userId}
       },
       relations: ['user'],
     })
-    if (!assignedUser)
+    if (!assignedUser){
       return res
         .status(401)
         .json({ message: 'User not assigned to this service' })
+    }
+      
 
     const logs = await logRepo.find({
       where: {
         apps: { appId: appId },
+        isManual: true
       },
     })
 
@@ -94,4 +100,4 @@ const getAllManualLogs = async (
 
 // }
 
-export default { getAllManualLogs }
+export default { getAllManualLogs , createManualLogs}

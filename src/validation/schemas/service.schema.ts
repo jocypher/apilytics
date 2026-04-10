@@ -8,8 +8,7 @@ export const createServiceSchema = Joi.object({
     })
 })
 
-export const serviceIdSchema = Joi.object({
-    serviceId: Joi.number().integer().required().messages({
-    })
+export const appIdSchema = Joi.object({
+    appId: Joi.string().required().messages({})
 })
 

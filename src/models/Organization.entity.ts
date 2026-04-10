@@ -20,7 +20,7 @@ export class Organization {
   @Column()
   organizationName: string
 
-  @ManyToOne(() => UserModel, (user) => user.userId)
+  @ManyToOne(() => UserModel, (user) => user.userId, {onDelete: 'SET NULL', onUpdate:'CASCADE'})
   @JoinColumn({ name: 'createdById' })
   createdBy: UserModel
 

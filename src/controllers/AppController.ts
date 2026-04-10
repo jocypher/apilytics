@@ -4,6 +4,7 @@ import { NextFunction, Request,Response} from 'express'
 
 
 
+
 const createApp = async (req: Request, res: Response, next: NextFunction) => {
   const userId = (req as any).id
   const orgId  = sharedUtils.validatedParam(req.params.orgId)
@@ -21,7 +22,7 @@ const assignUserToApp = async (req: Request, res: Response, next: NextFunction) 
   const userId = (req as any).id
   const orgId = sharedUtils.validatedParam(req.params.orgId)
   const appId = sharedUtils.validatedParam(req.params.appId)
-  const  targetId = sharedUtils.validatedParam(req.params.roleToChangeId)
+  const targetId = sharedUtils.validatedParam(req.params.targetUserId)
 
   try {
   const result = await appService.assignUserToApp(userId, orgId, appId, targetId)
@@ -95,11 +96,14 @@ const generateApiKey = async (req: any, res: any, next: any) => {
   }
 }
 
+
+
 export default {
   createApp,
   assignUserToApp,
   deleteApp,
   getAppById,
   getAssignedUsersForApp,
+  
   generateApiKey,
 }

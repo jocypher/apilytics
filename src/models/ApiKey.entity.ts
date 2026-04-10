@@ -4,12 +4,11 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
-  OneToMany,
+
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm'
 import { UserModel } from './UserModel.entity'
-import { Log } from './Log.entity'
 import { App } from './App.entity'
 
 @Entity()
@@ -26,11 +25,11 @@ export class ApiKey {
   @Column({ nullable: true })
   name: string
 
-  @ManyToOne(() => App, (app) => app.apiKey)
+  @ManyToOne(() => App, (app) => app.apiKey, {onDelete:'CASCADE', onUpdate:'CASCADE'})
   @JoinColumn({ name: 'apps' })
   apps: App
 
-  @ManyToOne(() => UserModel, (user) => user.userId)
+  @ManyToOne(() => UserModel, (user) => user.userId, {onDelete:'CASCADE',onUpdate:'SET NULL'})
   @JoinColumn({ name: 'createdByAdminId' })
   createdByAdmin: UserModel
 
@@ -48,7 +47,4 @@ export class ApiKey {
 
   @UpdateDateColumn()
   updatedDate: Date
-
-  @OneToMany(() => Log, (log) => log.apiKey)
-  logs: Log[]
 }

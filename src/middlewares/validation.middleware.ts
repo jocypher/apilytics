@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import Joi from 'joi'
+
 type RequestLocation = 'body' | 'query' | 'params'
 
 const validate = (schema: Joi.Schema, location: RequestLocation = 'body') => {

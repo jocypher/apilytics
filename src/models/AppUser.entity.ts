@@ -15,15 +15,15 @@ export class AppUser {
   @PrimaryGeneratedColumn('uuid')
   appUserId: string
 
-  @ManyToOne(() => UserModel, (user) => user.userId)
+  @ManyToOne(() => UserModel, (user) => user.userId, {onDelete:'SET NULL', onUpdate:'CASCADE'}, )
   @JoinColumn({ name: 'assignedById' })
   assignedBy: UserModel
 
-  @ManyToOne(() => UserModel, (user) => user.userId)
+  @ManyToOne(() => UserModel, (user) => user.userId, {onDelete:'SET NULL', onUpdate:'CASCADE'})
   @JoinColumn({ name: 'assignedToId' })
   assignedTo: UserModel
 
-  @ManyToOne(() => App, (app) => app.users)
+  @ManyToOne(() => App, (app) => app.users, {onDelete:'CASCADE', onUpdate:'CASCADE'})
   @JoinColumn({ name: 'appId' })
   app: App
 

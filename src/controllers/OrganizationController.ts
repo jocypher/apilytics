@@ -194,6 +194,29 @@ const getUsersOrganizations = async (
 }
 
 
+const addUserToOrganization = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = (req as any).id
+    const { username, email } = req.body
+    const orgId = sharedUtils.validatedParam(req.params.orgId)
+    const result = await organizationService.addUserToOrganization(
+      userId,
+      username,
+      email,
+      orgId
+    )
+
+    return res.status(200).json({result})
+  } catch (err) {
+    next(err)
+  }
+}
+
+
 export default {
   createOrganization,
   sendInvitation,
@@ -202,6 +225,7 @@ export default {
   updateOrganization,
   getMembersInOrganization,
   acceptOrganizationInvite,
+  addUserToOrganization,
   getOrganizationById,
   updateUserRole,
   getUsersOrganizations,

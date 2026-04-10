@@ -2,8 +2,8 @@ import { createClient } from 'redis'
 
 const client = createClient({
   socket: {
-    host: process.env.REDIS_HOST || 'redis',
-    port: Number(process.env.REDIS_PORT) || 6739
+    host: 'localhost', // for docker use host: redis
+    port: 6379
   },
 })
 

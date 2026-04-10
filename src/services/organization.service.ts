@@ -44,6 +44,8 @@ const createOrganization = async (organizationName: string, id: string) => {
     organizationName: organizationName,
     createdBy: user,
   })
+  await orgRepo.save(organization)
+  
 
   const member = membershipRepo.create({
     username: user.username,
@@ -51,9 +53,10 @@ const createOrganization = async (organizationName: string, id: string) => {
     organization: organization,
     role: MembershipRole.OWNER,
     inviteStatus: InviteStatus.ACCEPT,
+    invitedBy: user.userId
   })
 
-  await Promise.all([orgRepo.save(organization), membershipRepo.save(member)])
+  await  membershipRepo.save(member)
 
   const orgResult = {
     organizationId: organization.organizationId,
@@ -316,6 +319,7 @@ const updateUserRole = async (
   targetUserId: string,
   orgId: string,
   reqUserId: string
+
 ) => {
   if (!sharedUtils.isOrgAdminOrOwner(reqUserId)) {
     throw new ForbiddenError('Forbidden')
@@ -357,6 +361,56 @@ const getOrganizationsForUser = async (userId: string) => {
   }
   return organizationsForUsers
 }
+
+const addUserToOrganization = async(userId: string, username: string, email:string,organizationId: string)=> {
+
+
+  const admin = await membershipRepo.findOne({
+    where:{
+      organization:{organizationId: organizationId},
+      user:{ userId: userId}
+    }, 
+    select:{
+      role:true,
+      membershipId:true
+
+    },
+    relations:{
+        user:true,
+        organization:true
+    }
+  })
+
+  if(!admin){
+    throw new UnauthorizedError('user not authorized')
+  }
+
+  const userExist = await userRepo.findOne({
+    where:{
+      username: username, 
+      email: email
+    }
+
+  })
+
+  if(!userExist){
+    throw new ForbiddenError()
+  }
+
+  const addMember = membershipRepo.create({
+    user: userExist,
+    username: userExist.username,
+    inviteStatus:InviteStatus.ACCEPT,
+    invitedBy: userId,
+    organization: admin.organization
+  })
+
+  await membershipRepo.save(addMember)
+
+  return addMember
+
+
+}
 const generateInviteToken = (): string => {
   const token = crypto.randomUUID()
   return token
@@ -377,6 +431,7 @@ export default {
   getMembersInOrganization,
   acceptOrganizationInvite,
   getOrganizationsForUser,
+  addUserToOrganization,
   updateUserRole,
   generateInviteToken,
   hashInviteToken,

@@ -11,7 +11,6 @@ import {
 } from 'typeorm'
 import { UserModel } from './UserModel.entity'
 import { App } from './App.entity'
-import { ApiKey } from './ApiKey.entity'
 import { LogTag } from './LogTag.entity'
 import { LogLevel } from '../enums/logLevel.enum'
 
@@ -32,22 +31,19 @@ export class Log {
   })
   logLevel: LogLevel
 
-  @ManyToOne(() => UserModel, (user) => user.manualLogs, { nullable: true })
+  @ManyToOne(() => UserModel, (user) => user.manualLogs, { nullable: true, onDelete:'CASCADE', onUpdate:'SET NULL'})
   @JoinColumn({ name: 'createdBy' })
   createdBy: UserModel
 
-  @ManyToOne(() => App, (app) => app.log)
+  @ManyToOne(() => App, (app) => app.log, {onDelete:'CASCADE'})
   @JoinColumn({ name: 'appId' })
   apps: App
 
-  @ManyToOne(() => ApiKey, (apiKey) => apiKey.logs)
-  @JoinColumn({ name: 'apiKeyId' })
-  apiKey: ApiKey
 
   @Column({ type: 'jsonb', nullable: true })
   metadata: Record<string, any>
 
-  @ManyToMany(() => LogTag, (tag) => tag.logs)
+  @ManyToMany(() => LogTag, (tag) => tag.logs, {onDelete:'CASCADE', onUpdate:'CASCADE'})
   @JoinTable({
     name: 'logLogTag',
     joinColumn: { name: 'logId', referencedColumnName: 'logId' },
@@ -55,6 +51,8 @@ export class Log {
   })
   tags: LogTag[]
 
+  @Column({default:false})
+  isManual: boolean
   @CreateDateColumn()
   createdDate: Date
 }

@@ -1,7 +1,7 @@
 import Joi from 'joi'
 
 export const createOrgSchema = Joi.object({
-  org_name: Joi.string().required().messages({
+  orgName: Joi.string().required().messages({
     'string.empty': 'Organization name is required',
   }),
 })
@@ -40,4 +40,13 @@ export const updateUserRoleSchema = Joi.object({
     targetUserId: Joi.string().required().messages({
         'string.empty':'User id is required'
     })
+})
+
+export const addUserToOrganizationSchema = Joi.object({
+  email: Joi.string().email().required().messages({
+    'string.empty': 'Email is required',
+  }),
+  username: Joi.string().required().messages({
+    'string.empty':'username required'
+  })
 })

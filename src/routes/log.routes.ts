@@ -4,7 +4,7 @@ import verifyJwtMiddlewares from '../middlewares/verifyJwt.middlewares'
 import validate from '../middlewares/validation.middleware'
 import { userIdSchema } from '../validation/schemas/user.schema'
 import { organizationIdSchema } from '../validation/schemas/organization.schema'
-import { serviceIdSchema } from '../validation/schemas/service.schema'
+import { appIdSchema } from '../validation/schemas/service.schema'
 const routes = express.Router()
 
 // routes.post(
@@ -18,8 +18,8 @@ routes.get(
   '/:orgId/service/:serviceId/logs/manual',
   verifyJwtMiddlewares.verifyJwt,
   validate(userIdSchema),
-  validate(organizationIdSchema),
-  validate(serviceIdSchema),
+  validate(organizationIdSchema,'params'),
+  validate(appIdSchema, 'params'),
   logsController.getAllManualLogs
 )
 

@@ -10,7 +10,7 @@ import {
 import { Log } from './Log.entity'
 
 @Entity()
-@Index(['organizationId', 'tagName'], { unique: true })
+@Index(['tagName'], { unique: true })
 export class LogTag {
   @PrimaryGeneratedColumn("uuid")
   logTagId: string
@@ -21,11 +21,7 @@ export class LogTag {
   @Column({ type: 'text', nullable: true })
   description: string
 
-  // confirm if we need this 
-  @Column()
-  organizationId: string
-
-  @ManyToMany(() => Log, (log) => log.tags)
+  @ManyToMany(() => Log, (log) => log.tags, {onDelete:'CASCADE', onUpdate:'CASCADE'})
   logs: Log[]
 
   @CreateDateColumn()

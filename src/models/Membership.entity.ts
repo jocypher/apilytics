@@ -20,11 +20,11 @@ export class Membership {
   @Column({ nullable: true })
   username: string
 
-  @ManyToOne(() => Organization, (org) => org.apps)
+  @ManyToOne(() => Organization, (org) => org.members, {onDelete:'CASCADE'})
   @JoinColumn({ name: 'organizationId' })
   organization: Organization
 
-  @ManyToOne(() => UserModel, (user) => user.membership)
+  @ManyToOne(() => UserModel, (user) => user.membership, {onDelete:'SET NULL'})
   @JoinColumn({ name: 'userId' })
   user: UserModel
 
@@ -49,5 +49,6 @@ export class Membership {
   updatedDate: Date
 
   @Column({ nullable: true })
+  @ManyToOne(() => UserModel, (user) => user.membership, {onDelete:'CASCADE', onUpdate:'CASCADE', nullable:true})
   invitedBy: string
 }

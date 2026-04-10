@@ -2,7 +2,7 @@ import express from 'express'
 import verifyJwtMiddlewares from '../middlewares/verifyJwt.middlewares'
 import organizationController from '../controllers/OrganizationController'
 import validate from '../middlewares/validation.middleware'
-import { acceptOrganizationTokenSchema, createOrgSchema, deleteOrganizationSchema, sendInvitationSchema, updateOrgSchema } from '../validation/schemas/organization.schema'
+import { acceptOrganizationTokenSchema, addUserToOrganizationSchema, createOrgSchema, deleteOrganizationSchema, organizationIdSchema, sendInvitationSchema, updateOrgSchema } from '../validation/schemas/organization.schema'
 
 
 const routes = express.Router()
@@ -64,6 +64,14 @@ routes.get(
   '/members/:orgId',
   verifyJwtMiddlewares.verifyJwt,
   organizationController.getMembersInOrganization
+)
+
+routes.post(
+  '/user/:orgId',
+  verifyJwtMiddlewares.verifyJwt,
+  validate(organizationIdSchema, 'params'),
+  validate(addUserToOrganizationSchema),
+  organizationController.addUserToOrganization
 )
 
 export default routes

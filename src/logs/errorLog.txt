@@ -1,0 +1,10 @@
+20260410	12:48:18	b282bbe7-14e4-4894-961c-d1d982db9f65	Error	Organization with name [object Object] already exist
+20260410	14:35:59	ba820e4d-769d-4d6e-9638-c8626a024316	QueryFailedError	invalid input syntax for type uuid: "f800dd35-d2b7-4f97-be4c-b1bc9e"
+20260410	14:37:12	f68d85f5-edd6-4b07-bcb5-0e0178b9f57a	QueryFailedError	invalid input syntax for type uuid: "f800dd35-d2b7-4f97-be4c-b1bc9e"
+20260410	14:37:34	2bf235b6-c849-4240-b5ab-b44ce3e400ee	QueryFailedError	invalid input syntax for type uuid: "f800dd35-d2b7-4f97-be4c-b1bc9e"
+20260410	14:39:05	e7853500-0547-44a2-8b68-dd392ee5cc1d	QueryFailedError	invalid input syntax for type uuid: "f800dd35-d2b7-4f97-be4c-b1bc9e"
+20260410	15:06:32	5a13638c-4aef-4dbf-a8b3-67203b6223a7	EntityPropertyNotFoundError	Property "usermodel" was not found in "Membership". Make sure your query is correct.
+20260410	15:07:50	6acccad1-f2cd-4a53-90d9-43f330f293f1	EntityPropertyNotFoundError	Property "usermodel" was not found in "Membership". Make sure your query is correct.
+20260410	15:09:09	5bdb1d03-d7d4-471e-8e14-579c9d3f5287	EntityPropertyNotFoundError	Property "usermodel" was not found in "Membership". Make sure your query is correct.
+20260410	15:09:10	ca8ee124-fa21-443c-b848-5cc524cc2f72	EntityPropertyNotFoundError	Property "usermodel" was not found in "Membership". Make sure your query is correct.
+20260410	15:11:05	5db5198c-1bed-4068-aff7-5b3f4bcb0d2b	EntityPropertyNotFoundError	Property "user" was not found in "AppUser". Make sure your query is correct.

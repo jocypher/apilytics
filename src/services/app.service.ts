@@ -55,6 +55,9 @@ const assignUserToApp = async (
     },
     relations: ['organization', 'user'],
   })
+
+  console.log(requesterMembership)
+
   if (!requesterMembership) {
     throw new ForbiddenError('Not a member')
   }
@@ -67,7 +70,10 @@ const assignUserToApp = async (
       organization: { organizationId: orgId },
       user: { userId: targetUserId },
     },
-    relations: ['organization', 'usermodel'],
+    relations: {
+      user:true,
+      organization:true
+    },
   })
 
   if (!targetMembership) {
@@ -92,7 +98,9 @@ const assignUserToApp = async (
 
       app: { appId: app.appId },
     },
-    relations: ['user'],
+    relations: {
+      assignedTo: true
+    },
   })
 
   if (existingUserAssignment) {
@@ -204,9 +212,7 @@ const getAssignedUsersForApp = async (
   if (!foundApp) {
     throw new UnauthorizedError()
   }
-  // if(!sharedUtils.isOrgAdminOrOwner(orgMember)){
-  //   throw new ForbiddenError()
-  // }
+ 
 
   const [assignments, total] = await appUserRepo.findAndCount({
     where: {
